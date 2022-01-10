@@ -1,16 +1,6 @@
-# flutter_chess
+# Flutter Chess
 
-A new Flutter project.
+I am developing a game of Chess in Flutter. Using no packages, libraries or plugins I am coding everything from scratch, which includes game logic, game board, NegaMax algorithm-based AI (pending) and online multiplayer (pending).
+![](demo.gif)
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Visit: https://1998apoorvmalik.github.io/flutter-chess/ to play the alpha version.
