@@ -22,7 +22,7 @@ class ChessApp extends StatelessWidget {
       title: 'Chess',
       debugShowCheckedModeBanner: false,
       onGenerateRoute: CustomRouter.onGenerateRoute,
-      initialRoute: SplashScreen.routeName,
+      initialRoute: MainMenuScreen.routeName,
       theme: themeData,
     );
   }

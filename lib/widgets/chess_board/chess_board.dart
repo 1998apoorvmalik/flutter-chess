@@ -4,11 +4,15 @@ import 'package:flutter_chess/controller/controller.dart';
 import 'package:flutter_chess/widgets/chess_board/chess_board_cell.dart';
 
 class ChessBoard extends StatefulWidget {
-  const ChessBoard({Key? key, required this.controller, this.size = 800})
+  const ChessBoard(
+      {Key? key,
+      required this.controller,
+      this.agentPlayingColor = PieceColor.black,
+      this.size = 800})
       : super(key: key);
 
   final ChessController controller;
-
+  final PieceColor? agentPlayingColor;
   final double size;
 
   @override
@@ -34,36 +38,9 @@ class _ChessBoardState extends State<ChessBoard> {
         _selectedCell = null;
       });
     } else if (widget.controller
-        .getLegalMovesForSelectedCell(_selectedCell!.cellLocation)
+        .getLegalMovesForSelectedPos(_selectedCell!.cellLocation)
         .contains(cell.cellLocation)) {
-      // ChessBoardCell selectedCell = _selectedCell!;
       _movePiece(cell);
-
-      // // check if castling move
-      // if (selectedCell.pieceType == PieceType.whiteKing ||
-      //     selectedCell.pieceType == PieceType.blackKing) {
-      //   int moveLength =
-      //       BaseChessController.files.indexOf(cell.cellLocation[0]) -
-      //           BaseChessController.files.indexOf(selectedCell.cellLocation[0]);
-
-      //   if (moveLength == 2) {
-      //     _selectedCell = cells.firstWhere(
-      //         (cell) => cell.cellLocation == 'h${cell.cellLocation[1]}');
-      //     _movePiece(
-      //         cells.firstWhere(
-      //             ((cell) => cell.cellLocation == 'f${cell.cellLocation[1]}')),
-      //         castlingMove: true);
-      //   }
-
-      //   if (moveLength == -2) {
-      //     _selectedCell = cells.firstWhere(
-      //         (cell) => cell.cellLocation == 'a${cell.cellLocation[1]}');
-      //     _movePiece(
-      //         cells.firstWhere(
-      //             ((cell) => cell.cellLocation == 'd${cell.cellLocation[1]}')),
-      //         castlingMove: true);
-      //   }
-      // }
     } else {
       _selectedCell = null;
       _refreshBoard();
@@ -71,6 +48,7 @@ class _ChessBoardState extends State<ChessBoard> {
     }
   }
 
+  // This method highlights the tapped cell.
   void _highlightSelectedCell() {
     if (_selectedCell != null) {
       cells[_selectedCell!.index] = _selectedCell!.copyWith(
@@ -82,9 +60,14 @@ class _ChessBoardState extends State<ChessBoard> {
   // This method will highlight valid next move cells for a selected piece.
   void _highlightValidMovesForSelectedCell() {
     // Check if the selected cell is not empty.
-    if (_selectedCell != null && _selectedCell!.pieceType != null) {
+    if (_selectedCell != null &&
+        _selectedCell!.pieceType != null &&
+        widget.agentPlayingColor !=
+            (widget.controller.isWhiteTurn
+                ? PieceColor.white
+                : PieceColor.black)) {
       widget.controller
-          .getLegalMovesForSelectedCell(_selectedCell!.cellLocation)
+          .getLegalMovesForSelectedPos(_selectedCell!.cellLocation)
           .forEach((pos) {
         int index = cells.indexWhere((cell) => cell.cellLocation == pos);
 
@@ -99,25 +82,17 @@ class _ChessBoardState extends State<ChessBoard> {
   }
 
   void _movePiece(ChessBoardCell nextCell) {
-    if (_selectedCell != null) {
+    if (_selectedCell != null &&
+        widget.agentPlayingColor !=
+            (widget.controller.isWhiteTurn
+                ? PieceColor.white
+                : PieceColor.black)) {
+      // Controller update.
+      widget.controller.makeMove(
+        fromPos: _selectedCell!.cellLocation,
+        toPos: nextCell.cellLocation,
+      );
       setState(() {
-        // Step 1: Controller update.
-        widget.controller.makeMove(
-          fromPos: _selectedCell!.cellLocation,
-          toPos: nextCell.cellLocation,
-        );
-
-        // Step 2: Scene update.
-        cells[nextCell.index] =
-            nextCell.copyWith(pieceType: _selectedCell!.pieceType);
-        cells[_selectedCell!.index] = _selectedCell!.copyWith(pieceType: null);
-        // cells = cells
-        //     .map((cell) => cell.copyWith(
-        //         pieceType: cell.pieceType, cellMode: ChessBoardCellMode.normal))
-        //     .toList();
-
-        _refreshBoard();
-
         // Deselect the currently selected cell.
         _selectedCell = null;
       });
@@ -126,20 +101,25 @@ class _ChessBoardState extends State<ChessBoard> {
 
   // Updates the scene board configuration corresponding to the latest controller board.
   void _refreshBoard() {
-    cells = List.generate(
-      64,
-      (index) => ChessBoardCell(
-        index: index,
-        onTapCallback: onCellTap,
-        pieceType: widget.controller.board[7 - (index / 8).floor()]
-            [(index % 8)],
-      ),
-    );
+    setState(() {
+      cells = List.generate(
+        64,
+        (index) => ChessBoardCell(
+          index: index,
+          onTapCallback: onCellTap,
+          pieceType: widget.controller.board[7 - (index / 8).floor()]
+              [(index % 8)],
+        ),
+      );
+    });
   }
 
   @override
   void initState() {
     _refreshBoard();
+    widget.controller.sceneRefreshCallback = () {
+      _refreshBoard();
+    };
     super.initState();
   }
 

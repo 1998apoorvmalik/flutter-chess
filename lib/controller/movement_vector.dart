@@ -53,8 +53,8 @@ class MovementVector {
   }
 
   List<String> directionalOffsets(
-      {required List<List<PieceType?>> board, required String loc}) {
-    List<int> locationIndex = BaseChessController.positionToLocation(loc);
+      {required List<List<PieceType?>> board, required String pos}) {
+    List<int> locationIndex = BaseChessController.positionToLocation(pos);
     List<List<int>> directionVectors = _directionVectors.toList();
     List<String> validLocations = [];
 
@@ -82,7 +82,7 @@ class MovementVector {
 
     // Add any special moves location to the list.
     if (getSpecialMoves != null) {
-      validLocations.addAll(getSpecialMoves!(board: board, pos: loc));
+      validLocations.addAll(getSpecialMoves!(board: board, pos: pos));
     }
 
     return validLocations;

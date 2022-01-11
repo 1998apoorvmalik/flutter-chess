@@ -83,13 +83,13 @@ class BaseChessController {
       List<int> loc = positionToLocation(pos);
       List<String> validMovesLoc = [];
 
-      // Two cell move.
-      if (color == PieceColor.white
-          ? loc[0] == 1
-          : loc[0] == 6 &&
-              board[loc.first + (color == PieceColor.white ? 2 : -2)]
-                      [loc.last] ==
-                  null) {
+      // Two cell move has 3 conditions: the selected pawn shouldn't be moved before,
+      // the first forward cell is empty and, the second forward cell is empty.
+      if ((color == PieceColor.white ? loc[0] == 1 : loc[0] == 6) &&
+          (board[loc.first + (color == PieceColor.white ? 1 : -1)][loc.last] ==
+              null) &&
+          (board[loc.first + (color == PieceColor.white ? 2 : -2)][loc.last] ==
+              null)) {
         validMovesLoc.add(locationToPosition(
             [loc.first + (color == PieceColor.white ? 2 : -2), loc.last]));
       }

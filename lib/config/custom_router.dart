@@ -18,7 +18,8 @@ class CustomRouter {
             options: settings.arguments as Map<String, bool>);
 
       case GameScreen.routeName:
-        return GameScreen.route();
+        return GameScreen.route(
+            options: settings.arguments as Map<String, dynamic>);
       default:
         return _errorRoute();
     }

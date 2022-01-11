@@ -29,8 +29,12 @@ class _OptionScreenState extends State<OptionScreen> {
   late final double deviceHeight = MediaQuery.of(context).size.height;
   late final double aspectRatio = deviceWidth / deviceHeight;
 
+  // Board size.
+  late final double boardSize =
+      aspectRatio < 0.64 ? deviceWidth / 1.08 : (6 * deviceHeight / 11);
+
   // Spacing valus.
-  final double labelSpacing = 100.0;
+  final double labelSpacing = 120.0;
 
   // Text field properties.
   final maxTextFieldLines = 1;
@@ -46,11 +50,19 @@ class _OptionScreenState extends State<OptionScreen> {
   final double _difficultySliderMaxValue = 10;
   double _difficultySliderCurrentValue = 5;
 
+  // Move clock settings.
+  bool _moveClockEnabled = true;
+  int _time = 5;
+
+  // Undo settings.
+  int undoAttempts = 1;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         body: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(
@@ -100,7 +112,16 @@ class _OptionScreenState extends State<OptionScreen> {
                           InkWell(
                             splashFactory: NoSplash.splashFactory,
                             onTap: () => Navigator.of(context)
-                                .pushNamed(GameScreen.routeName),
+                                .pushNamed(GameScreen.routeName, arguments: {
+                              'player1Name':
+                                  _player1NameTextFieldController.text,
+                              'player2Name':
+                                  _player2NameTextFieldController.text,
+                              'moveClockEnabled': _moveClockEnabled,
+                              'time': _time,
+                              'undoAttempts': undoAttempts,
+                              'isSinglePlayer': widget.isSinglePlayer,
+                            }),
                             child: Transform(
                               transform: Matrix4.rotationY(22 / 7),
                               alignment: Alignment.center,
@@ -181,12 +202,148 @@ class _OptionScreenState extends State<OptionScreen> {
                               ),
                             ),
                           ],
-                        )
+                        ),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: labelSpacing,
+                            child: Text(
+                              'Move Clock',
+                              style: Theme.of(context).textTheme.headline3,
+                            ),
+                          ),
+                          Center(
+                            child: Switch(
+                                value: _moveClockEnabled,
+                                onChanged: (_) => setState(() =>
+                                    _moveClockEnabled = !_moveClockEnabled)),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: labelSpacing,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _moveClockEnabled
+                                      ? 'Initial Time'
+                                      : 'Think Time',
+                                  style: Theme.of(context).textTheme.headline3,
+                                ),
+                                Text(
+                                  '(Minutes)',
+                                  style: Theme.of(context).textTheme.headline3,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 8.0,
+                          ),
+                          Column(
+                            children: [
+                              const Text('5'),
+                              Radio<int>(
+                                  value: 5,
+                                  groupValue: _time,
+                                  onChanged: (val) =>
+                                      setState(() => _time = val!)),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              const Text('10'),
+                              Radio<int>(
+                                  value: 10,
+                                  groupValue: _time,
+                                  onChanged: (val) =>
+                                      setState(() => _time = val!)),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              const Text('15'),
+                              Radio<int>(
+                                  value: 15,
+                                  groupValue: _time,
+                                  onChanged: (val) =>
+                                      setState(() => _time = val!)),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              const Text('30'),
+                              Radio<int>(
+                                  value: 30,
+                                  groupValue: _time,
+                                  onChanged: (val) =>
+                                      setState(() => _time = val!)),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: labelSpacing,
+                            child: Text(
+                              'Undo Attempts',
+                              style: Theme.of(context).textTheme.headline3,
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 8.0,
+                          ),
+                          Column(
+                            children: [
+                              const Text('0'),
+                              Radio<int>(
+                                  value: 0,
+                                  groupValue: undoAttempts,
+                                  onChanged: (val) =>
+                                      setState(() => undoAttempts = val!)),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              const Text('1'),
+                              Radio<int>(
+                                  value: 1,
+                                  groupValue: undoAttempts,
+                                  onChanged: (val) =>
+                                      setState(() => undoAttempts = val!)),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              const Text('3'),
+                              Radio<int>(
+                                  value: 3,
+                                  groupValue: undoAttempts,
+                                  onChanged: (val) =>
+                                      setState(() => undoAttempts = val!)),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              const Text('∞'),
+                              Radio<int>(
+                                  value: -1,
+                                  groupValue: undoAttempts,
+                                  onChanged: (val) =>
+                                      setState(() => undoAttempts = val!)),
+                            ],
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
                 Expanded(
-                  flex: 2,
+                  flex: 1,
                   child: Center(
                     child: Hero(
                       tag: 'chess-pieces-image',

@@ -50,6 +50,36 @@ ThemeData themeData = ThemeData(
         thumbColor: kIconColor,
         inactiveTrackColor: kSecondaryColor,
       ),
+  switchTheme: SwitchThemeData(
+    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    trackColor: MaterialStateProperty.resolveWith((states) {
+      if (states.isNotEmpty && states.first == MaterialState.selected) {
+        return Colors.black.withOpacity(kBlackOpacity / 1.5);
+      }
+      return kSecondaryColor;
+    }),
+    thumbColor: MaterialStateProperty.resolveWith(
+      (states) {
+        if (states.isNotEmpty && states.first == MaterialState.selected) {
+          return kIconColor;
+        }
+        return Color.alphaBlend(
+            Colors.black.withOpacity(kBlackOpacity / 1.5), kPrimaryColor);
+      },
+    ),
+  ),
+  radioTheme: RadioThemeData(
+    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    fillColor: MaterialStateProperty.resolveWith(
+      (states) {
+        if (states.isNotEmpty && states.first == MaterialState.selected) {
+          return kIconColor;
+        }
+        return Color.alphaBlend(
+            Colors.black.withOpacity(kBlackOpacity / 1.5), kPrimaryColor);
+      },
+    ),
+  ),
   textTheme: TextTheme(
     headline1: TextStyle(
       color: Colors.black.withOpacity(kBlackOpacity),

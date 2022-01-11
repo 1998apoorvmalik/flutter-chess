@@ -1,9 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_chess/controller/base_chess_controller.dart';
 import 'package:flutter_chess/controller/movement_vector.dart';
 import 'enums.dart';
 
 class ChessController extends BaseChessController {
   ChessController({
+    this.moveDoneCallback,
     String initialFenString =
         'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
   }) : _board = List.generate(8, (_) => List.generate(8, (_) => null)) {
@@ -11,6 +13,11 @@ class ChessController extends BaseChessController {
   }
 
   final List<List<PieceType?>> _board;
+
+  final Future<void> Function()? moveDoneCallback;
+
+  // Scene refresh callback.
+  VoidCallback? sceneRefreshCallback;
 
   // All moves during the game are stored in this list.
   final List<String> _moveList = [];
@@ -23,33 +30,35 @@ class ChessController extends BaseChessController {
   bool whiteQueenSideCastleRestricted = false;
 
   bool isGameEnded = false;
-  bool isWhiteTurn = true;
+  bool _isWhiteTurn = true;
 
   List<List<PieceType?>> get board => _board;
 
   List<String> get moveList => _moveList;
 
+  bool get isWhiteTurn => _isWhiteTurn;
+
   bool get canWhiteKingSideCastle =>
-      isWhiteTurn &&
+      _isWhiteTurn &&
       !whiteKingSideCastleRestricted &&
       _board[0][5] == null &&
       _board[0][6] == null;
 
   bool get canWhiteQueenSideCastle =>
-      isWhiteTurn &&
+      _isWhiteTurn &&
       !whiteQueenSideCastleRestricted &&
       board[0][1] == null &&
       _board[0][2] == null &&
       _board[0][3] == null;
 
   bool get canBlackKingSideCastle =>
-      !isWhiteTurn &&
+      !_isWhiteTurn &&
       !blackKingSideCastleRestricted &&
       _board[7][5] == null &&
       _board[7][6] == null;
 
   bool get canBlackQueenSideCastle =>
-      !isWhiteTurn &&
+      !_isWhiteTurn &&
       !blackQueenSideCastleRestricted &&
       board[7][1] == null &&
       _board[7][2] == null &&
@@ -66,6 +75,27 @@ class ChessController extends BaseChessController {
     }
     return pgnList.join(" ");
   }
+
+  // Return all legal moves for the selected player
+  List<String> get allLegalPositions {
+    List<String> legalPos = [];
+    for (int row = 0; row < 8; row++) {
+      for (int col = 0; col < 8; col++) {
+        PieceType? piece = _board[row][col];
+        if (piece != null &&
+            BaseChessController.getPieceTypeColor(piece) ==
+                (isWhiteTurn ? PieceColor.white : PieceColor.black)) {
+          final String pos = BaseChessController.locationToPosition([row, col]);
+          legalPos.add(pos);
+        }
+      }
+    }
+    return legalPos;
+  }
+
+  // Call this method in your scene.
+  void updateSceneRefreshCallback(VoidCallback sceneRefreshCallback) =>
+      this.sceneRefreshCallback = sceneRefreshCallback;
 
   void _movePiece({
     required PieceType piece,
@@ -110,8 +140,8 @@ class ChessController extends BaseChessController {
     }
   }
 
-  // Castling allowed only if king and rook are not moved from their original positions in the game.
-  void _updateCastlingStatus(String pos) {
+  // Castling allowed only if king and rook are not moved from their original positions during the game.
+  void _updateCastlingRestrictions(String pos) {
     if (pos == 'h1' || pos == 'e1') {
       whiteKingSideCastleRestricted = true;
     }
@@ -136,7 +166,7 @@ class ChessController extends BaseChessController {
     PieceType? piece = _board[fromLoc.first][fromLoc.last];
 
     // Check if a valid piece can be moved.
-    if (getLegalMovesForSelectedCell(fromPos).contains(toPos)) {
+    if (getLegalMovesForSelectedPos(fromPos).contains(toPos)) {
       // Castling move check.
       int moveLength = toLoc.last - fromLoc.last;
       bool castlingMove = false;
@@ -148,12 +178,12 @@ class ChessController extends BaseChessController {
           // Queen Side Castle.
           _board[fromLoc.first][0] = null;
           _board[fromLoc.first][3] =
-              isWhiteTurn ? PieceType.whiteRook : PieceType.blackRook;
+              _isWhiteTurn ? PieceType.whiteRook : PieceType.blackRook;
         } else {
           // King Side Castle.
           _board[fromLoc.first][7] = null;
           _board[fromLoc.first][5] =
-              isWhiteTurn ? PieceType.whiteRook : PieceType.blackRook;
+              _isWhiteTurn ? PieceType.whiteRook : PieceType.blackRook;
         }
       }
 
@@ -169,18 +199,28 @@ class ChessController extends BaseChessController {
       _board[fromLoc.first][fromLoc.last] = null;
 
       // Update turn.
-      isWhiteTurn = !isWhiteTurn;
+      _isWhiteTurn = !_isWhiteTurn;
 
       // Update castling restrictions.
-      _updateCastlingStatus(fromPos);
+      _updateCastlingRestrictions(fromPos);
 
       // Check if pawn can be transformed to higher value piece.
       _pawnTransfromConditionCheck();
+
+      // Move done callback.
+      if (moveDoneCallback != null) {
+        moveDoneCallback!();
+      }
+
+      // Scene refresh callback.
+      if (sceneRefreshCallback != null) {
+        sceneRefreshCallback!();
+      }
     }
   }
 
-  List<String> getLegalMovesForSelectedCell(String loc) {
-    List<int> locationIndex = BaseChessController.positionToLocation(loc);
+  List<String> getLegalMovesForSelectedPos(String pos) {
+    List<int> locationIndex = BaseChessController.positionToLocation(pos);
     PieceType? piece = _board[locationIndex.first][locationIndex.last];
 
     List<String> legalMoves = [];
@@ -188,11 +228,12 @@ class ChessController extends BaseChessController {
     if (piece != null) {
       MovementVector boardPiece = pieceMovementOffset[piece]!;
 
-      if ((boardPiece.pieceColor == PieceColor.white && isWhiteTurn) ||
-          (boardPiece.pieceColor == PieceColor.black && !isWhiteTurn)) {
-        legalMoves = boardPiece.directionalOffsets(board: _board, loc: loc);
+      if ((boardPiece.pieceColor == PieceColor.white && _isWhiteTurn) ||
+          (boardPiece.pieceColor == PieceColor.black && !_isWhiteTurn)) {
+        legalMoves = boardPiece.directionalOffsets(board: _board, pos: pos);
       }
 
+      // Castling moves.
       if (canWhiteKingSideCastle) {
         legalMoves.add('g1');
       }
