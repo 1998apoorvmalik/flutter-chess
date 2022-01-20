@@ -18,6 +18,7 @@ class MovementVector {
   final bool allowJump;
   final List<String> Function(
       {required List<List<PieceType?>> board,
+      required List<String> moveList,
       required String pos})? getSpecialMoves;
 
   bool _isSafe(int x, int y) => x >= 0 && y >= 0 && x < 8 && y < 8;
@@ -53,7 +54,9 @@ class MovementVector {
   }
 
   List<String> directionalOffsets(
-      {required List<List<PieceType?>> board, required String pos}) {
+      {required List<List<PieceType?>> board,
+      required List<String> moveList,
+      required String pos}) {
     List<int> locationIndex = BaseChessController.positionToLocation(pos);
     List<List<int>> directionVectors = _directionVectors.toList();
     List<String> validLocations = [];
@@ -82,7 +85,8 @@ class MovementVector {
 
     // Add any special moves location to the list.
     if (getSpecialMoves != null) {
-      validLocations.addAll(getSpecialMoves!(board: board, pos: pos));
+      validLocations
+          .addAll(getSpecialMoves!(board: board, moveList: moveList, pos: pos));
     }
 
     return validLocations;

@@ -1,42 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chess/controller/base_chess_controller.dart';
 import 'package:flutter_chess/controller/movement_vector.dart';
+import '../extensions/extensions.dart';
 import 'enums.dart';
 
 class ChessController extends BaseChessController {
-  ChessController({
-    this.moveDoneCallback,
-    String initialFenString =
-        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-  }) : _board = List.generate(8, (_) => List.generate(8, (_) => null)) {
-    _loadGameFromFenString(initialFenString);
+  ChessController(
+      {this.moveDoneCallback,
+      String? fenString,
+      String? pgnString,
+      this.computerColor}) {
+    reset(fenString: fenString, pgnString: pgnString);
   }
 
-  final List<List<PieceType?>> _board;
+  // Game board representation.
+  late List<List<PieceType?>> _board;
+
+  // All moves during the game are stored in this list.
+  final List<String> _moveList = [];
+
+  // Computer player color.
+  final PieceColor? computerColor;
+
+  // Some game properties to keep track of.
+  late bool blackKingSideCastleRestricted;
+  late bool blackQueenSideCastleRestricted;
+
+  late bool whiteKingSideCastleRestricted;
+  late bool whiteQueenSideCastleRestricted;
+
+  late bool _isGameEnded;
+  late bool _isWhiteTurn;
+
+  // Reset game.
+  void reset({String? fenString, String? pgnString}) {
+    _board = List.generate(8, (_) => List.generate(8, (_) => null));
+
+    if (pgnString == null) {
+      _loadGameFromFenString(
+          fenString ?? BaseChessController.initialFenString());
+    } else {
+      _loadGameFromPGNString(pgnString);
+    }
+
+    // Clear the move list.
+    _moveList.clear();
+
+    // Set game properties;
+    blackKingSideCastleRestricted = false;
+    blackQueenSideCastleRestricted = false;
+
+    whiteKingSideCastleRestricted = false;
+    whiteQueenSideCastleRestricted = false;
+
+    _isGameEnded = false;
+    _isWhiteTurn = true;
+  }
+
+  // End game.
+  void dispose() {
+    _isGameEnded = true;
+  }
 
   final Future<void> Function()? moveDoneCallback;
 
   // Scene refresh callback.
   VoidCallback? sceneRefreshCallback;
 
-  // All moves during the game are stored in this list.
-  final List<String> _moveList = [];
-
-  // Some game properties to keep track of.
-  bool blackKingSideCastleRestricted = false;
-  bool blackQueenSideCastleRestricted = false;
-
-  bool whiteKingSideCastleRestricted = false;
-  bool whiteQueenSideCastleRestricted = false;
-
-  bool isGameEnded = false;
-  bool _isWhiteTurn = true;
+  // Use getter to expose private properties.
 
   List<List<PieceType?>> get board => _board;
 
   List<String> get moveList => _moveList;
 
+  PieceColor get currentTurnColor =>
+      _isWhiteTurn ? PieceColor.white : PieceColor.black;
+
   bool get isWhiteTurn => _isWhiteTurn;
+
+  bool get isGameEnded => _isGameEnded;
 
   bool get canWhiteKingSideCastle =>
       _isWhiteTurn &&
@@ -127,6 +169,77 @@ class ChessController extends BaseChessController {
     }
   }
 
+  void _loadGameFromPGNString(String pgnString) {
+    reset();
+
+    if (pgnString.isEmpty) {
+      if (sceneRefreshCallback != null) {
+        sceneRefreshCallback!();
+      }
+      return;
+    }
+
+    List<String> moveList = pgnString.split(RegExp(r'\s+'))
+      ..removeWhere((e) => e.last == '.');
+
+    String? initialPos;
+    PieceType pieceType;
+    String finalPos;
+
+    print(moveList);
+
+    for (int i = 0; i < moveList.length; i++) {
+      // King side castle.
+      if (moveList[i] == '0-0') {
+        makeMove(
+            fromPos: i % 2 == 0 ? 'e1' : 'e8', toPos: i % 2 == 0 ? 'g1' : 'g8');
+        continue;
+      }
+      // Queen side castle.
+      if (moveList[i] == '0-0-0') {
+        makeMove(
+            fromPos: i % 2 == 0 ? 'e1' : 'e8', toPos: i % 2 == 0 ? 'c1' : 'c8');
+        continue;
+      }
+
+      finalPos = moveList[i].substring(moveList[i].length - 2);
+
+      // Get piece type
+      if (moveList[i].length > 2 && moveList[i].contains(RegExp(r'[A-Z]'))) {
+        String chessPiece =
+            BaseChessController.fenCharToPieceType(moveList[i].first)
+                .toString()
+                .split('.')
+                .last
+                .substring(5);
+        String chessPieceType =
+            i % 2 == 0 ? 'white' + chessPiece : 'black' + chessPiece;
+        pieceType = PieceType.values.firstWhere(
+            (element) => element.toString().split('.').last == chessPieceType);
+      } else {
+        pieceType = i % 2 == 0 ? PieceType.whitePawn : PieceType.blackPawn;
+      }
+
+      // Find initial position.
+      for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+          String pos = BaseChessController.locationToPosition([row, col]);
+          if (_board[row][col] == pieceType &&
+              getLegalMovesForSelectedPos(pos).contains(finalPos)) {
+            initialPos = pos;
+          }
+        }
+      }
+
+      // Finally if pgn is valid, make move.
+      if (initialPos != null) {
+        makeMove(fromPos: initialPos, toPos: finalPos);
+      } else {
+        return;
+      }
+    }
+  }
+
   // Check if pawn can be transformed to queen.
   void _pawnTransfromConditionCheck() {
     for (int i = 0; i < 8; i++) {
@@ -153,6 +266,18 @@ class ChessController extends BaseChessController {
     }
     if (pos == 'a8' || pos == 'e8') {
       blackQueenSideCastleRestricted = true;
+    }
+  }
+
+  void undoMove() {
+    // Remove last move from the Move List.
+    if (moveList.isNotEmpty) {
+      _moveList.removeLast();
+      // Need to undo one more move if game is singleplayer and computer has played its turn.
+      if (computerColor != null && currentTurnColor != computerColor) {
+        _moveList.removeLast();
+      }
+      _loadGameFromPGNString(gamePGN);
     }
   }
 
@@ -230,20 +355,21 @@ class ChessController extends BaseChessController {
 
       if ((boardPiece.pieceColor == PieceColor.white && _isWhiteTurn) ||
           (boardPiece.pieceColor == PieceColor.black && !_isWhiteTurn)) {
-        legalMoves = boardPiece.directionalOffsets(board: _board, pos: pos);
+        legalMoves = boardPiece.directionalOffsets(
+            board: _board, moveList: _moveList, pos: pos);
       }
 
       // Castling moves.
-      if (canWhiteKingSideCastle) {
+      if (canWhiteKingSideCastle && piece == PieceType.whiteKing) {
         legalMoves.add('g1');
       }
-      if (canWhiteQueenSideCastle) {
+      if (canWhiteQueenSideCastle && piece == PieceType.whiteKing) {
         legalMoves.add('c1');
       }
-      if (canBlackKingSideCastle) {
+      if (canBlackKingSideCastle && piece == PieceType.blackKing) {
         legalMoves.add('g8');
       }
-      if (canBlackQueenSideCastle) {
+      if (canBlackQueenSideCastle && piece == PieceType.blackKing) {
         legalMoves.add('c8');
       }
     }

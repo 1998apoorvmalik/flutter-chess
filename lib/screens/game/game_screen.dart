@@ -79,19 +79,23 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     // Initialize Chess Controller.
-    chessController = ChessController(moveDoneCallback: () async {
-      if (agent != null) {
-        final List<String> move = await agent!.sendMove();
+    chessController = ChessController(
+        computerColor: widget.isSinglePlayer ? PieceColor.black : null,
+        moveDoneCallback: () async {
+          if (agent != null) {
+            final List<String> move = await agent!.sendMove();
 
-        if (move.isNotEmpty) {
-          final String fromPos = move.first;
-          final String toPos = move.last;
+            if (move.isNotEmpty) {
+              final String fromPos = move.first;
+              final String toPos = move.last;
 
-          // Agent makes the move.
-          chessController.makeMove(fromPos: fromPos, toPos: toPos);
-        }
-      }
-    });
+              // Agent makes the move.
+              if (chessController.currentTurnColor == PieceColor.black) {
+                chessController.makeMove(fromPos: fromPos, toPos: toPos);
+              }
+            }
+          }
+        });
 
     // Initialize Agent.
     agent = widget.isSinglePlayer
@@ -105,7 +109,7 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   void dispose() {
-    chessController.isGameEnded = true;
+    chessController.dispose();
     super.dispose();
   }
 
@@ -150,7 +154,7 @@ class _GameScreenState extends State<GameScreen> {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        print(chessController.gamePGN);
+                        chessController.undoMove();
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(6.0),

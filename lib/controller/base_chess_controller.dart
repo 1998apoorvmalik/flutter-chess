@@ -1,7 +1,11 @@
 import 'enums.dart';
 import 'movement_vector.dart';
+import '../extensions/extensions.dart';
 
 class BaseChessController {
+  static String initialFenString() =>
+      'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
   static PieceType fenCharToPieceType(String fenChar) {
     if (fenChar == 'r') {
       return PieceType.blackRook;
@@ -78,10 +82,35 @@ class BaseChessController {
     // Pawn special move function.
     List<String> pawnSpecialMove(
         {required List<List<PieceType?>> board,
+        required List<String> moveList,
         required String pos,
         required PieceColor color}) {
       List<int> loc = positionToLocation(pos);
       List<String> validMovesLoc = [];
+
+      // Lets code En-Passant checker. There are a few requirements for the move to be legal:
+      // First -> The capturing pawn must have advanced exactly three ranks to perform this move.
+      // Second -> The captured pawn must have moved two squares in one move, landing right next to the capturing pawn.
+      // Third -> The en passant capture must be performed on the turn immediately after the pawn being captured moves.
+      // If the player does not capture en passant on that turn, they no longer can do it later.
+      void enPassantMoveCheck({int dir = 1}) {
+        // En-Passant move check.
+        List<int> enPassantLoc = [loc.first, loc.last + dir];
+        PieceType? enPassantAttackedPiece =
+            board[enPassantLoc.first][enPassantLoc.last];
+
+        if ((color == PieceColor.white ? pos.last == '5' : pos.last == '4') &&
+            enPassantAttackedPiece ==
+                (color == PieceColor.white
+                    ? PieceType.blackPawn
+                    : PieceType.whitePawn) &&
+            moveList.last == locationToPosition(enPassantLoc) &&
+            moveList.sublist(0, moveList.length - 1).every((move) =>
+                move.length != 2 ||
+                move.first != locationToPosition(enPassantLoc).first)) {
+          validMovesLoc.add(locationToPosition(enPassantLoc));
+        }
+      }
 
       // Two cell move has 3 conditions: the selected pawn shouldn't be moved before,
       // the first forward cell is empty and, the second forward cell is empty.
@@ -107,10 +136,12 @@ class BaseChessController {
             loc.last + 1
           ]));
         }
+        // Right En-Passant move check.
+        enPassantMoveCheck(dir: 1);
       }
 
       // Check if right-diagonal attack is possible.
-      if (loc.last > 1) {
+      if (loc.last > 0) {
         // Right attack move.
         PieceType? rightAttackLocPieceType =
             board[loc.first + (color == PieceColor.white ? 1 : -1)]
@@ -122,6 +153,8 @@ class BaseChessController {
             loc.last - 1
           ]));
         }
+        // Left En-Passant move check.
+        enPassantMoveCheck(dir: -1);
       }
 
       return validMovesLoc;
@@ -143,9 +176,13 @@ class BaseChessController {
             mirrorDirection: false,
             getSpecialMoves: (
                     {required List<List<PieceType?>> board,
+                    required List<String> moveList,
                     required String pos}) =>
                 pawnSpecialMove(
-                    board: board, pos: pos, color: getPieceTypeColor(piece)),
+                    board: board,
+                    pos: pos,
+                    moveList: moveList,
+                    color: getPieceTypeColor(piece)),
           );
           break;
 
@@ -249,9 +286,9 @@ class BaseChessController {
     if (castlingMove) {
       int moveLength = toLoc.last - fromLoc.last;
       if (moveLength > 0) {
-        return '0-0-0';
-      } else {
         return '0-0';
+      } else {
+        return '0-0-0';
       }
     }
 
