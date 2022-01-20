@@ -271,16 +271,20 @@ class ChessController extends BaseChessController {
 
     PieceType? piece = _board[fromLoc.first][fromLoc.last];
 
+    // no. of row & columns displaced respectively, while moving the piece.
+    int xMoveDisplacement = toLoc.last - fromLoc.last;
+    // int yMoveDisplacement = toLoc.first - fromLoc.first;
+
     // Check if a valid piece can be moved.
     if (getLegalMovesForSelectedPos(fromPos).contains(toPos)) {
       // Castling move check.
-      int moveLength = toLoc.last - fromLoc.last;
+
       bool castlingMove = false;
       if ((piece! == PieceType.whiteKing || piece == PieceType.blackKing) &&
-          moveLength.abs() > 1) {
+          xMoveDisplacement.abs() > 1) {
         castlingMove = true;
 
-        if (moveLength < 0) {
+        if (xMoveDisplacement < 0) {
           // Queen Side Castle.
           _board[fromLoc.first][0] = null;
           _board[fromLoc.first][3] =
@@ -291,6 +295,13 @@ class ChessController extends BaseChessController {
           _board[fromLoc.first][5] =
               _isWhiteTurn ? PieceType.whiteRook : PieceType.blackRook;
         }
+      }
+
+      // En-Passant move check.
+      if ((piece == PieceType.whitePawn || piece == PieceType.blackPawn) &&
+          _board[toLoc.first][toLoc.last] == null &&
+          xMoveDisplacement.abs() > 0) {
+        _board[fromLoc.first][fromLoc.last + xMoveDisplacement] = null;
       }
 
       // Add move to the move list.

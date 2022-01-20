@@ -78,6 +78,8 @@ class BaseChessController {
       List<int> loc = positionToLocation(pos);
       List<String> validMovesLoc = [];
 
+      int moveDirection() => color == PieceColor.white ? 1 : -1;
+
       // Lets code En-Passant checker. There are a few requirements for the move to be legal:
       // First -> The capturing pawn must have advanced exactly three ranks to perform this move.
       // Second -> The captured pawn must have moved two squares in one move, landing right next to the capturing pawn.
@@ -98,33 +100,29 @@ class BaseChessController {
             moveList.sublist(0, moveList.length - 1).every((move) =>
                 move.length != 2 ||
                 move.first != locationToPosition(enPassantLoc).first)) {
-          validMovesLoc.add(locationToPosition(enPassantLoc));
+          validMovesLoc.add(locationToPosition(
+              [loc.first + moveDirection(), loc.last + dir]));
         }
       }
 
       // Two cell move has 3 conditions: the selected pawn shouldn't be moved before,
       // the first forward cell is empty and, the second forward cell is empty.
       if ((color == PieceColor.white ? loc[0] == 1 : loc[0] == 6) &&
-          (board[loc.first + (color == PieceColor.white ? 1 : -1)][loc.last] ==
-              null) &&
-          (board[loc.first + (color == PieceColor.white ? 2 : -2)][loc.last] ==
-              null)) {
-        validMovesLoc.add(locationToPosition(
-            [loc.first + (color == PieceColor.white ? 2 : -2), loc.last]));
+          (board[loc.first + moveDirection()][loc.last] == null) &&
+          (board[loc.first + 2 * moveDirection()][loc.last] == null)) {
+        validMovesLoc.add(
+            locationToPosition([loc.first + 2 * moveDirection(), loc.last]));
       }
 
       // Check if left-diagonal attack is possible.
       if (loc.last < 7) {
         // Left attack move.
         PieceType? leftAttackLocPieceType =
-            board[loc.first + (color == PieceColor.white ? 1 : -1)]
-                [loc.last + 1];
+            board[loc.first + moveDirection()][loc.last + 1];
         if (leftAttackLocPieceType != null &&
             getPieceTypeColor(leftAttackLocPieceType) != color) {
-          validMovesLoc.add(locationToPosition([
-            loc.first + (color == PieceColor.white ? 1 : -1),
-            loc.last + 1
-          ]));
+          validMovesLoc.add(
+              locationToPosition([loc.first + moveDirection(), loc.last + 1]));
         }
         // Right En-Passant move check.
         enPassantMoveCheck(dir: 1);
@@ -134,14 +132,11 @@ class BaseChessController {
       if (loc.last > 0) {
         // Right attack move.
         PieceType? rightAttackLocPieceType =
-            board[loc.first + (color == PieceColor.white ? 1 : -1)]
-                [loc.last - 1];
+            board[loc.first + moveDirection()][loc.last - 1];
         if (rightAttackLocPieceType != null &&
             getPieceTypeColor(rightAttackLocPieceType) != color) {
-          validMovesLoc.add(locationToPosition([
-            loc.first + (color == PieceColor.white ? 1 : -1),
-            loc.last - 1
-          ]));
+          validMovesLoc.add(
+              locationToPosition([loc.first + moveDirection(), loc.last - 1]));
         }
         // Left En-Passant move check.
         enPassantMoveCheck(dir: -1);
