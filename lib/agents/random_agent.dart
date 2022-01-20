@@ -12,17 +12,9 @@ class RandomAgent extends BaseAgent {
 
   @override
   Future<List<String>> sendMove() async {
-    if ((playingColor == PieceColor.white && controller.isWhiteTurn) ||
-        (playingColor == PieceColor.black && !controller.isWhiteTurn)) {
+    if (playingColor == controller.currentTurnColor) {
       await Future.delayed(Duration(seconds: delaySeconds));
-
-      for (String pos in controller.allLegalPositions..shuffle()) {
-        List<String> legalMoves = controller.getLegalMovesForSelectedPos(pos);
-
-        if (legalMoves.isNotEmpty) {
-          return [pos, (legalMoves..shuffle()).first];
-        }
-      }
+      return (controller.allLegalMoves..shuffle()).first;
     }
     return [];
   }

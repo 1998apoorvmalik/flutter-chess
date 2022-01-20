@@ -40,34 +40,24 @@ class BaseChessController {
         return 'p';
       case PieceType.whitePawn:
         return 'P';
-
       case PieceType.blackKing:
         return 'k';
-
       case PieceType.whiteKing:
         return 'K';
-
       case PieceType.blackQueen:
         return 'q';
-
       case PieceType.whiteQueen:
         return 'Q';
-
       case PieceType.blackRook:
         return 'r';
-
       case PieceType.whiteRook:
         return 'R';
-
       case PieceType.blackKnight:
         return 'n';
-
       case PieceType.whiteKnight:
         return 'N';
-
       case PieceType.blackBishop:
         return 'b';
-
       case PieceType.whiteBishop:
         return 'B';
     }

@@ -118,23 +118,6 @@ class ChessController extends BaseChessController {
     return pgnList.join(" ");
   }
 
-  // Return all legal moves for the selected player
-  List<String> get allLegalPositions {
-    List<String> legalPos = [];
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        PieceType? piece = _board[row][col];
-        if (piece != null &&
-            BaseChessController.getPieceTypeColor(piece) ==
-                (isWhiteTurn ? PieceColor.white : PieceColor.black)) {
-          final String pos = BaseChessController.locationToPosition([row, col]);
-          legalPos.add(pos);
-        }
-      }
-    }
-    return legalPos;
-  }
-
   // Call this method in your scene.
   void updateSceneRefreshCallback(VoidCallback sceneRefreshCallback) =>
       this.sceneRefreshCallback = sceneRefreshCallback;
@@ -185,8 +168,6 @@ class ChessController extends BaseChessController {
     String? initialPos;
     PieceType pieceType;
     String finalPos;
-
-    print(moveList);
 
     for (int i = 0; i < moveList.length; i++) {
       // King side castle.
@@ -374,6 +355,26 @@ class ChessController extends BaseChessController {
       }
     }
 
+    return legalMoves;
+  }
+
+  // Returns all legal moves for the current player.
+  List<List<String>> get getAllLegalMovesforCurrentPlayer {
+    List<List<String>> legalMoves = [];
+    for (int row = 0; row < 8; row++) {
+      for (int col = 0; col < 8; col++) {
+        PieceType? piece = _board[row][col];
+        if (piece != null &&
+            BaseChessController.getPieceTypeColor(piece) == currentTurnColor) {
+          final String initialPos =
+              BaseChessController.locationToPosition([row, col]);
+
+          getLegalMovesForSelectedPos(initialPos).forEach((finalPos) {
+            legalMoves.add([initialPos, finalPos]);
+          });
+        }
+      }
+    }
     return legalMoves;
   }
 }
