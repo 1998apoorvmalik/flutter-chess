@@ -37,9 +37,11 @@ class _ChessBoardState extends State<ChessBoard> {
       setState(() {
         _selectedCell = null;
       });
-    } else if (widget.controller
-        .getLegalMovesForSelectedPos(_selectedCell!.cellLocation)
-        .contains(cell.cellLocation)) {
+    } else if (widget.controller.legalMovesForCurrentPlayer
+        .where((move) =>
+            move.first == _selectedCell!.cellLocation &&
+            move.last == cell.cellLocation)
+        .isNotEmpty) {
       _movePiece(cell);
     } else {
       _selectedCell = null;

@@ -6,6 +6,7 @@ import 'package:flutter_chess/config/custom_route.dart';
 import 'package:flutter_chess/constants.dart';
 import 'package:flutter_chess/controller/controller.dart';
 import 'package:flutter_chess/widgets/widgets.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen(
@@ -135,7 +136,45 @@ class _GameScreenState extends State<GameScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () {
+                        showDialog(
+                            context: context,
+                            builder: (_) {
+                              return Dialog(
+                                backgroundColor: kPrimaryColor,
+                                elevation: 8.0,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <PopupMenuEntry>[
+                                    const PopupMenuItem(
+                                      child: Text('Export FEN'),
+                                    ),
+                                    PopupMenuItem(
+                                      onTap: () async {
+                                        String url =
+                                            "https://lichess.org/paste?pgn=${chessController.gamePGN.replaceAll(' ', '+')}";
+                                        if (await canLaunch(url)) {
+                                          await launch(url);
+                                        }
+                                      },
+                                      child: const Text(
+                                        'Export PGN',
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      child: Text(
+                                        'Export Move List',
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      onTap: () => Navigator.of(context).pop(),
+                                      child: const Text('Quit Game'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            });
+                      },
                       child: Padding(
                         padding: const EdgeInsets.all(6.0),
                         child: Text(

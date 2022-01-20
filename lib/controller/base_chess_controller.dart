@@ -258,6 +258,7 @@ class BaseChessController {
     required List<int> fromLoc,
     required List<int> toLoc,
     bool castlingMove = false,
+    bool enPassantMove = false,
   }) {
     PieceType? fromLocPiece = board[fromLoc.first][fromLoc.last];
     PieceType? toLocPiece = board[toLoc.first][toLoc.last];
@@ -289,7 +290,7 @@ class BaseChessController {
     String body = '';
 
     // Current turn piece captures opponent piece.
-    if (toLocPiece != null) {
+    if (toLocPiece != null || enPassantMove) {
       body = 'x';
       if (fromLocPiece == PieceType.whitePawn ||
           fromLocPiece == PieceType.blackPawn) {
@@ -318,6 +319,20 @@ class BaseChessController {
     return piece.toString().split('.').last.substring(0, 5) == 'white'
         ? PieceColor.white
         : PieceColor.black;
+  }
+
+  static List<String> findPieceLocations(
+      {required List<List<PieceType?>> board, required PieceType piece}) {
+    List<String> positions = [];
+
+    for (int row = 0; row < 8; row++) {
+      for (int col = 0; col < 8; col++) {
+        if (board[row][col] == piece) {
+          positions.add(locationToPosition([row, col]));
+        }
+      }
+    }
+    return positions;
   }
 
   static String locationToPosition(List<int> locationIndex) =>
