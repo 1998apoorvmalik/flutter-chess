@@ -7,11 +7,26 @@ import 'enums.dart';
 class ChessController extends BaseChessController {
   ChessController(
       {this.moveDoneCallback,
+      this.checkCallback,
+      this.checkMateCallback,
+      this.gameDrawCallback,
       String? fenString,
       String? pgnString,
       this.computerColor}) {
     reset(fenString: fenString, pgnString: pgnString);
   }
+
+  /// Callback executed when move is done.
+  final Future<void> Function()? moveDoneCallback;
+
+  /// Callback executed when player is checked.
+  final Function(PieceColor playerColor)? checkCallback;
+
+  /// Checkmate callback.
+  final Function(PieceColor playerColor)? checkMateCallback;
+
+  /// Game draw callback.
+  final VoidCallback? gameDrawCallback;
 
   // Game board representation.
   late List<List<PieceType?>> _board;
@@ -33,7 +48,7 @@ class ChessController extends BaseChessController {
   late bool _isWhiteTurn;
 
   // Current player legal moves.
-  late List<List<String>> legalMovesForCurrentPlayer;
+  List<List<String>> legalMovesForCurrentPlayer = [];
 
   // Reset game.
   void reset({String? fenString, String? pgnString}) {
@@ -60,16 +75,13 @@ class ChessController extends BaseChessController {
     _isWhiteTurn = true;
 
     // Update legal moves for current player.
-    legalMovesForCurrentPlayer = [];
-    legalMovesForCurrentPlayer = getLegalMovesForCurrentPlayer.toList();
+    _updateLegalMovesForCurrentPlayer();
   }
 
   // End game.
   void dispose() {
     _isGameEnded = true;
   }
-
-  final Future<void> Function()? moveDoneCallback;
 
   // Scene refresh callback.
   VoidCallback? sceneRefreshCallback;
@@ -80,9 +92,12 @@ class ChessController extends BaseChessController {
   PieceColor get currentTurnColor =>
       _isWhiteTurn ? PieceColor.white : PieceColor.black;
 
-  // Returns all pseudo legal moves for the current player.
-  List<List<String>> get getPseudoLegalMovesforCurrentPlayer =>
-      getPseudoLegalMovesforPlayer(currentTurnColor);
+  String get currentPlayerKingPos => BaseChessController.findPieceLocations(
+          board: _board,
+          piece: currentTurnColor == PieceColor.white
+              ? PieceType.whiteKing
+              : PieceType.blackKing)
+      .first;
 
   bool get isWhiteTurn => _isWhiteTurn;
   bool get isGameEnded => _isGameEnded;
@@ -128,6 +143,110 @@ class ChessController extends BaseChessController {
   // Call this method in your scene.
   void updateSceneRefreshCallback(VoidCallback sceneRefreshCallback) =>
       this.sceneRefreshCallback = sceneRefreshCallback;
+
+  void undoMove() {
+    // Remove last move from the Move List.
+    if (moveList.isNotEmpty) {
+      _moveList.removeLast();
+      // Need to undo one more move if game is singleplayer and computer has played its turn.
+      if (computerColor != null && currentTurnColor != computerColor) {
+        _moveList.removeLast();
+      }
+      _loadGameFromPGNString(gamePGN);
+    }
+  }
+
+  void makeMove({
+    required String fromPos,
+    required String toPos,
+  }) {
+    List<int> fromLoc = BaseChessController.positionToLocation(fromPos);
+    List<int> toLoc = BaseChessController.positionToLocation(toPos);
+
+    PieceType? piece = _board[fromLoc.first][fromLoc.last];
+
+    // no. of row & columns displaced respectively, while moving the piece.
+    int xMoveDisplacement = toLoc.last - fromLoc.last;
+    // int yMoveDisplacement = toLoc.first - fromLoc.first;
+
+    // Check if a valid piece can be moved.
+    if (legalMovesForCurrentPlayer
+        .any((move) => move.first == fromPos && move.last == toPos)) {
+      // Castling move check.
+      bool castlingMove = false;
+      bool enPassantMove = false;
+
+      if ((piece! == PieceType.whiteKing || piece == PieceType.blackKing) &&
+          xMoveDisplacement.abs() > 1) {
+        castlingMove = true;
+
+        if (xMoveDisplacement < 0) {
+          // Queen Side Castle.
+          _board[fromLoc.first][0] = null;
+          _board[fromLoc.first][3] =
+              _isWhiteTurn ? PieceType.whiteRook : PieceType.blackRook;
+        } else {
+          // King Side Castle.
+          _board[fromLoc.first][7] = null;
+          _board[fromLoc.first][5] =
+              _isWhiteTurn ? PieceType.whiteRook : PieceType.blackRook;
+        }
+      }
+
+      // En-Passant move check.
+      if ((piece == PieceType.whitePawn || piece == PieceType.blackPawn) &&
+          _board[toLoc.first][toLoc.last] == null &&
+          xMoveDisplacement.abs() > 0) {
+        _board[fromLoc.first][fromLoc.last + xMoveDisplacement] = null;
+        enPassantMove = true;
+      }
+
+      // Add move to the move list.
+      _moveList.add((BaseChessController.convertMoveToAlgebricNotation(
+        board: board,
+        fromLoc: fromLoc,
+        toLoc: toLoc,
+        castlingMove: castlingMove,
+        enPassantMove: enPassantMove,
+      )));
+
+      // Update board.
+      _movePiece(piece: piece, loc: toPos);
+      _board[fromLoc.first][fromLoc.last] = null;
+
+      // Update turn.
+      _isWhiteTurn = !_isWhiteTurn;
+
+      // Update castling restrictions.
+      _updateCastlingRestrictions(fromPos);
+
+      // Check if pawn can be transformed to higher value piece.
+      _pawnTransfromConditionCheck();
+
+      // Update legal moves.
+      _updateLegalMovesForCurrentPlayer();
+
+      // Move done callback.
+      if (moveDoneCallback != null) {
+        moveDoneCallback!();
+      }
+
+      // Scene refresh callback.
+      if (sceneRefreshCallback != null) {
+        sceneRefreshCallback!();
+      }
+    }
+  }
+
+  // Return legal moves for selected pos
+  List<String> getLegalMovesForSelectedPos(String pos) {
+    return legalMovesForCurrentPlayer
+        .where((move) => move.first == pos)
+        .map((move) => move.last)
+        .toList();
+  }
+
+  //-----------------------------** Private Methods **----------------------------//
 
   void _movePiece({
     required PieceType piece,
@@ -257,173 +376,103 @@ class ChessController extends BaseChessController {
     }
   }
 
-  void undoMove() {
-    // Remove last move from the Move List.
-    if (moveList.isNotEmpty) {
-      _moveList.removeLast();
-      // Need to undo one more move if game is singleplayer and computer has played its turn.
-      if (computerColor != null && currentTurnColor != computerColor) {
-        _moveList.removeLast();
+  /// Updates legal moves for the current player.
+  void _updateLegalMovesForCurrentPlayer() {
+    List<List<String>> currentPlayerLegalMoves =
+        _getPseudoLegalMovesforPlayer(currentTurnColor);
+
+    String kingPos = currentPlayerKingPos;
+
+    bool kingChecked = _getPseudoLegalMovesforPlayer(
+            currentTurnColor == PieceColor.black
+                ? PieceColor.white
+                : PieceColor.black)
+        .any((move) => move.last == kingPos);
+
+    List<List<PieceType?>> altBoard = board;
+
+    // Play the move and see if the king can be saved.
+    int itr = -1;
+    while (++itr < currentPlayerLegalMoves.length) {
+      List<int> initialLoc = BaseChessController.positionToLocation(
+          currentPlayerLegalMoves[itr].first);
+      List<int> finalLoc = BaseChessController.positionToLocation(
+          currentPlayerLegalMoves[itr].last);
+
+      PieceType? initialPiece = altBoard[initialLoc.first][initialLoc.last];
+      PieceType? finalPiece = altBoard[finalLoc.first][finalLoc.last];
+
+      altBoard[initialLoc.first][initialLoc.last] = null;
+      altBoard[finalLoc.first][finalLoc.last] = initialPiece;
+
+      PieceColor attackingPlayer = currentTurnColor == PieceColor.white
+          ? PieceColor.black
+          : PieceColor.white;
+
+      // If the king is moved, find its position.
+      String nextKingPos = (initialPiece == PieceType.blackKing ||
+              initialPiece == PieceType.whiteKing)
+          ? currentPlayerLegalMoves[itr].last
+          : kingPos;
+
+      if (_getPseudoLegalMovesforPlayer(attackingPlayer, altBoard: altBoard)
+          .any((threatMove) => threatMove.last == nextKingPos)) {
+        currentPlayerLegalMoves.removeAt(itr--);
       }
-      _loadGameFromPGNString(gamePGN);
+
+      // Reset board.
+      altBoard[initialLoc.first][initialLoc.last] = initialPiece;
+      altBoard[finalLoc.first][finalLoc.last] = finalPiece;
     }
-  }
 
-  void makeMove({
-    required String fromPos,
-    required String toPos,
-  }) {
-    List<int> fromLoc = BaseChessController.positionToLocation(fromPos);
-    List<int> toLoc = BaseChessController.positionToLocation(toPos);
-
-    PieceType? piece = _board[fromLoc.first][fromLoc.last];
-
-    // no. of row & columns displaced respectively, while moving the piece.
-    int xMoveDisplacement = toLoc.last - fromLoc.last;
-    // int yMoveDisplacement = toLoc.first - fromLoc.first;
-
-    // Check if a valid piece can be moved.
-    if (legalMovesForCurrentPlayer
-        .where((move) => move.first == fromPos && move.last == toPos)
-        .isNotEmpty) {
-      // Castling move check.
-      bool castlingMove = false;
-      bool enPassantMove = false;
-
-      if ((piece! == PieceType.whiteKing || piece == PieceType.blackKing) &&
-          xMoveDisplacement.abs() > 1) {
-        castlingMove = true;
-
-        if (xMoveDisplacement < 0) {
-          // Queen Side Castle.
-          _board[fromLoc.first][0] = null;
-          _board[fromLoc.first][3] =
-              _isWhiteTurn ? PieceType.whiteRook : PieceType.blackRook;
-        } else {
-          // King Side Castle.
-          _board[fromLoc.first][7] = null;
-          _board[fromLoc.first][5] =
-              _isWhiteTurn ? PieceType.whiteRook : PieceType.blackRook;
-        }
+    // Check if game has ended, and further conclude.
+    if (!kingChecked && currentPlayerLegalMoves.isEmpty) {
+      _isGameEnded = true;
+      if (gameDrawCallback != null) {
+        gameDrawCallback!();
       }
-
-      // En-Passant move check.
-      if ((piece == PieceType.whitePawn || piece == PieceType.blackPawn) &&
-          _board[toLoc.first][toLoc.last] == null &&
-          xMoveDisplacement.abs() > 0) {
-        _board[fromLoc.first][fromLoc.last + xMoveDisplacement] = null;
-        enPassantMove = true;
+    } else if (kingChecked && currentPlayerLegalMoves.isEmpty) {
+      _isGameEnded = true;
+      if (checkMateCallback != null) {
+        checkMateCallback!(currentTurnColor);
       }
-
-      // Add move to the move list.
-      _moveList.add((BaseChessController.convertMoveToAlgebricNotation(
-        board: board,
-        fromLoc: fromLoc,
-        toLoc: toLoc,
-        castlingMove: castlingMove,
-        enPassantMove: enPassantMove,
-      )));
-
-      // Update board.
-      _movePiece(piece: piece, loc: toPos);
-      _board[fromLoc.first][fromLoc.last] = null;
-
-      // Update turn.
-      _isWhiteTurn = !_isWhiteTurn;
-
-      // Update castling restrictions.
-      _updateCastlingRestrictions(fromPos);
-
-      // Check if pawn can be transformed to higher value piece.
-      _pawnTransfromConditionCheck();
-
-      // Update legal moves.
-      legalMovesForCurrentPlayer = getLegalMovesForCurrentPlayer.toList();
-
-      // Move done callback.
-      if (moveDoneCallback != null) {
-        moveDoneCallback!();
-      }
-
-      // Scene refresh callback.
-      if (sceneRefreshCallback != null) {
-        sceneRefreshCallback!();
+    } else if (kingChecked && currentPlayerLegalMoves.isNotEmpty) {
+      _isGameEnded = true;
+      if (checkCallback != null) {
+        checkCallback!(currentTurnColor);
       }
     }
+
+    legalMovesForCurrentPlayer = currentPlayerLegalMoves;
   }
 
-  List<List<String>> get kingThreateningMoves {
-    // Check if current player king not under attack
-    final String kingPos = BaseChessController.findPieceLocations(
-            board: _board,
-            piece: currentTurnColor == PieceColor.white
-                ? PieceType.whiteKing
-                : PieceType.blackKing)
-        .first;
-
-    // Find all attacking moves to current player king.
-    final List<List<String>> attackingMoves = getPseudoLegalMovesforPlayer(
-            currentTurnColor == PieceColor.white
-                ? PieceColor.black
-                : PieceColor.white)
-        .where((move) => move.last == kingPos)
-        .toList();
-
-    return attackingMoves;
-  }
-
-  List<List<String>> get getLegalMovesForCurrentPlayer {
-    List<List<String>> kingThreatMoves = kingThreateningMoves;
-    List<List<String>> pseudoLegalMoves = getPseudoLegalMovesforCurrentPlayer;
-
+  /// Returns all pseudo legal moves for the specified player.
+  List<List<String>> _getPseudoLegalMovesforPlayer(PieceColor playerColor,
+      {List<List<PieceType?>>? altBoard}) {
     List<List<String>> legalMoves = [];
+    for (int row = 0; row < 8; row++) {
+      for (int col = 0; col < 8; col++) {
+        PieceType? piece = (altBoard ?? _board)[row][col];
+        if (piece != null &&
+            BaseChessController.getPieceTypeColor(piece) == playerColor) {
+          final String initialPos =
+              BaseChessController.locationToPosition([row, col]);
 
-    // King under attack.
-    if (kingThreatMoves.isNotEmpty) {
-      print('King Threatened');
-      ChessController controller = ChessController();
-      controller._board = _board.toList();
-      controller._isWhiteTurn = isWhiteTurn;
-
-      for (List<String> move in pseudoLegalMoves) {
-        List<int> initialLoc =
-            BaseChessController.positionToLocation(move.first);
-        List<int> finalLoc = BaseChessController.positionToLocation(move.last);
-
-        PieceType? initialPiece =
-            controller._board[initialLoc.first][initialLoc.last];
-        PieceType? finalPiece =
-            controller._board[finalLoc.first][finalLoc.last];
-
-        controller._board[initialLoc.first][initialLoc.last] = null;
-        controller._board[finalLoc.first][finalLoc.last] = initialPiece;
-
-        if (controller.kingThreateningMoves.isEmpty) {
-          legalMoves.add(move);
+          _getPseudoLegalMovesForSelectedPos(initialPos).forEach((finalPos) {
+            legalMoves.add([initialPos, finalPos]);
+          });
         }
-
-        // reset
-        controller._board[initialLoc.first][initialLoc.last] = initialPiece;
-        controller._board[finalLoc.first][finalLoc.last] = finalPiece;
       }
-    } else {
-      return pseudoLegalMoves;
     }
-
     return legalMoves;
   }
 
-  // Return legal moves for selected pos
-  List<String> getLegalMovesForSelectedPos(String pos) {
-    return legalMovesForCurrentPlayer
-        .where((move) => move.first == pos)
-        .map((move) => move.last)
-        .toList();
-  }
-
-  List<String> _getPseudoLegalMovesForSelectedPos(String pos) {
+  /// Returns all pseudo legal moves for the selected position.
+  List<String> _getPseudoLegalMovesForSelectedPos(String pos,
+      {List<List<PieceType?>>? altBoard}) {
     List<int> locationIndex = BaseChessController.positionToLocation(pos);
-    PieceType? piece = _board[locationIndex.first][locationIndex.last];
+    PieceType? piece =
+        (altBoard ?? _board)[locationIndex.first][locationIndex.last];
 
     List<String> legalMoves = [];
 
@@ -431,7 +480,7 @@ class ChessController extends BaseChessController {
       MovementVector boardPiece = pieceMovementOffset[piece]!;
 
       legalMoves = boardPiece.directionalOffsets(
-          board: _board, moveList: _moveList, pos: pos);
+          board: altBoard ?? _board, moveList: _moveList, pos: pos);
 
       // Castling moves.
       if (canWhiteKingSideCastle && piece == PieceType.whiteKing) {
@@ -448,26 +497,6 @@ class ChessController extends BaseChessController {
       }
     }
 
-    return legalMoves;
-  }
-
-  // Returns all legal moves for the given player.
-  List<List<String>> getPseudoLegalMovesforPlayer(PieceColor playerColor) {
-    List<List<String>> legalMoves = [];
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 8; col++) {
-        PieceType? piece = _board[row][col];
-        if (piece != null &&
-            BaseChessController.getPieceTypeColor(piece) == playerColor) {
-          final String initialPos =
-              BaseChessController.locationToPosition([row, col]);
-
-          _getPseudoLegalMovesForSelectedPos(initialPos).forEach((finalPos) {
-            legalMoves.add([initialPos, finalPos]);
-          });
-        }
-      }
-    }
     return legalMoves;
   }
 }

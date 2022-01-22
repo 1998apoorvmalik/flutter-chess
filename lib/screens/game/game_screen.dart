@@ -81,6 +81,10 @@ class _GameScreenState extends State<GameScreen> {
   void initState() {
     // Initialize Chess Controller.
     chessController = ChessController(
+        checkCallback: (PieceColor color) =>
+            _showCheckDialog(pieceColor: color),
+        checkMateCallback: (PieceColor color) =>
+            _showCheckDialog(pieceColor: color, checkmate: true),
         computerColor: widget.isSinglePlayer ? PieceColor.black : null,
         moveDoneCallback: () async {
           if (agent != null) {
@@ -114,6 +118,49 @@ class _GameScreenState extends State<GameScreen> {
     super.dispose();
   }
 
+  void _showCheckDialog(
+      {required PieceColor pieceColor, bool checkmate = false}) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          Future.delayed(Duration(seconds: checkmate ? 5 : 1), () {
+            Navigator.of(context).pop(true);
+          });
+          return AlertDialog(
+            backgroundColor: Colors.redAccent,
+            title: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (!checkmate)
+                      Image.asset(
+                        "assets/images/king/king-${pieceColor == PieceColor.white ? 'white' : 'black'}.png",
+                        width: 30,
+                      ),
+                    const SizedBox(
+                      width: 8.0,
+                    ),
+                    Text(checkmate ? 'CHECK MATE!' : 'CHECK',
+                        style: Theme.of(context).textTheme.headline5),
+                  ],
+                ),
+                if (checkmate)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      '${pieceColor == PieceColor.white ? PieceColor.black.toString().split('.').last : PieceColor.white.toString().split('.').last} Winner'
+                          .toUpperCase(),
+                      style: Theme.of(context).textTheme.headline6,
+                    ),
+                  ),
+              ],
+            ),
+          );
+        });
+  }
+
+  void gameDrawCallback() {}
   @override
   Widget build(BuildContext context) {
     // Device screen information.

@@ -337,4 +337,18 @@ class BaseChessController {
 
   static String locationToPosition(List<int> locationIndex) =>
       '${files[locationIndex.last]}${locationIndex.first + 1}';
+
+  static PieceType? getPieceTypeAtPosition(
+      List<List<PieceType?>> board, String pos) {
+    List<int> loc = positionToLocation(pos);
+    return board[loc.first][loc.last];
+  }
+
+  static PieceColor? getPieceColorAtPosition(
+      List<List<PieceType?>> board, String pos) {
+    PieceType? pieceType = getPieceTypeAtPosition(board, pos);
+    if (pieceType != null) {
+      return getPieceTypeColor(pieceType);
+    }
+  }
 }
