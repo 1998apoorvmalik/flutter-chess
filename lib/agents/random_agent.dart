@@ -14,8 +14,7 @@ class RandomAgent extends BaseAgent {
   Future<List<String>> sendMove() async {
     if (playingColor == controller.currentTurnColor) {
       await Future.delayed(Duration(seconds: delaySeconds));
-      return (controller.getAllPseudoLegalMovesforCurrentPlayer..shuffle())
-          .first;
+      return (controller.getLegalMovesForCurrentPlayer..shuffle()).first;
     }
     return [];
   }

@@ -81,8 +81,8 @@ class ChessController extends BaseChessController {
       _isWhiteTurn ? PieceColor.white : PieceColor.black;
 
   // Returns all pseudo legal moves for the current player.
-  List<List<String>> get getAllPseudoLegalMovesforCurrentPlayer =>
-      getAllPseudoLegalMovesforPlayer(currentTurnColor);
+  List<List<String>> get getPseudoLegalMovesforCurrentPlayer =>
+      getPseudoLegalMovesforPlayer(currentTurnColor);
 
   bool get isWhiteTurn => _isWhiteTurn;
   bool get isGameEnded => _isGameEnded;
@@ -362,7 +362,7 @@ class ChessController extends BaseChessController {
         .first;
 
     // Find all attacking moves to current player king.
-    final List<List<String>> attackingMoves = getAllPseudoLegalMovesforPlayer(
+    final List<List<String>> attackingMoves = getPseudoLegalMovesforPlayer(
             currentTurnColor == PieceColor.white
                 ? PieceColor.black
                 : PieceColor.white)
@@ -374,8 +374,7 @@ class ChessController extends BaseChessController {
 
   List<List<String>> get getLegalMovesForCurrentPlayer {
     List<List<String>> kingThreatMoves = kingThreateningMoves;
-    List<List<String>> pseudoLegalMoves =
-        getAllPseudoLegalMovesforCurrentPlayer;
+    List<List<String>> pseudoLegalMoves = getPseudoLegalMovesforCurrentPlayer;
 
     List<List<String>> legalMoves = [];
 
@@ -453,7 +452,7 @@ class ChessController extends BaseChessController {
   }
 
   // Returns all legal moves for the given player.
-  List<List<String>> getAllPseudoLegalMovesforPlayer(PieceColor playerColor) {
+  List<List<String>> getPseudoLegalMovesforPlayer(PieceColor playerColor) {
     List<List<String>> legalMoves = [];
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
