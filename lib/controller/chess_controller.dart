@@ -28,14 +28,17 @@ class ChessController extends BaseChessController {
   /// Game draw callback.
   final VoidCallback? gameDrawCallback;
 
-  // Game board representation.
+  /// Game board representation.
   late List<List<PieceType?>> _board;
 
-  // All moves during the game are stored in this list.
+  /// All moves during the game are stored in this list.
   final List<String> _moveList = [];
 
-  // Computer player color.
+  /// Computer player color.
   final PieceColor? computerColor;
+
+  /// Current player checked.
+  bool currentPlayerChecked = false;
 
   // Some game properties to keep track of.
   late bool blackKingSideCastleRestricted;
@@ -76,6 +79,9 @@ class ChessController extends BaseChessController {
 
     // Update legal moves for current player.
     _updateLegalMovesForCurrentPlayer();
+
+    // Update checked property.
+    currentPlayerChecked = false;
   }
 
   // End game.
@@ -159,6 +165,7 @@ class ChessController extends BaseChessController {
   void makeMove({
     required String fromPos,
     required String toPos,
+    bool executeCheckCallback = true,
   }) {
     List<int> fromLoc = BaseChessController.positionToLocation(fromPos);
     List<int> toLoc = BaseChessController.positionToLocation(toPos);
@@ -224,7 +231,8 @@ class ChessController extends BaseChessController {
       _pawnTransfromConditionCheck();
 
       // Update legal moves.
-      _updateLegalMovesForCurrentPlayer();
+      _updateLegalMovesForCurrentPlayer(
+          executeCheckCallback: executeCheckCallback);
 
       // Move done callback.
       if (moveDoneCallback != null) {
@@ -340,7 +348,8 @@ class ChessController extends BaseChessController {
 
       // Finally if pgn is valid, make move.
       if (initialPos != null) {
-        makeMove(fromPos: initialPos, toPos: finalPos);
+        makeMove(
+            fromPos: initialPos, toPos: finalPos, executeCheckCallback: false);
       } else {
         return;
       }
@@ -377,17 +386,19 @@ class ChessController extends BaseChessController {
   }
 
   /// Updates legal moves for the current player.
-  void _updateLegalMovesForCurrentPlayer() {
-    List<List<String>> currentPlayerLegalMoves =
-        _getPseudoLegalMovesforPlayer(currentTurnColor);
-
+  void _updateLegalMovesForCurrentPlayer({bool executeCheckCallback = true}) {
+    // Get the current player king position.
     String kingPos = currentPlayerKingPos;
 
-    bool kingChecked = _getPseudoLegalMovesforPlayer(
+    // Update current player checked property.
+    currentPlayerChecked = _getPseudoLegalMovesforPlayer(
             currentTurnColor == PieceColor.black
                 ? PieceColor.white
                 : PieceColor.black)
         .any((move) => move.last == kingPos);
+
+    List<List<String>> currentPlayerLegalMoves =
+        _getPseudoLegalMovesforPlayer(currentTurnColor);
 
     List<List<PieceType?>> altBoard = board;
 
@@ -426,19 +437,19 @@ class ChessController extends BaseChessController {
     }
 
     // Check if game has ended, and further conclude.
-    if (!kingChecked && currentPlayerLegalMoves.isEmpty) {
+    if (!currentPlayerChecked && currentPlayerLegalMoves.isEmpty) {
       _isGameEnded = true;
       if (gameDrawCallback != null) {
         gameDrawCallback!();
       }
-    } else if (kingChecked && currentPlayerLegalMoves.isEmpty) {
+    } else if (currentPlayerChecked && currentPlayerLegalMoves.isEmpty) {
       _isGameEnded = true;
       if (checkMateCallback != null) {
         checkMateCallback!(currentTurnColor);
       }
-    } else if (kingChecked && currentPlayerLegalMoves.isNotEmpty) {
+    } else if (currentPlayerChecked && currentPlayerLegalMoves.isNotEmpty) {
       _isGameEnded = true;
-      if (checkCallback != null) {
+      if (executeCheckCallback && checkCallback != null) {
         checkCallback!(currentTurnColor);
       }
     }
@@ -483,17 +494,20 @@ class ChessController extends BaseChessController {
           board: altBoard ?? _board, moveList: _moveList, pos: pos);
 
       // Castling moves.
-      if (canWhiteKingSideCastle && piece == PieceType.whiteKing) {
-        legalMoves.add('g1');
-      }
-      if (canWhiteQueenSideCastle && piece == PieceType.whiteKing) {
-        legalMoves.add('c1');
-      }
-      if (canBlackKingSideCastle && piece == PieceType.blackKing) {
-        legalMoves.add('g8');
-      }
-      if (canBlackQueenSideCastle && piece == PieceType.blackKing) {
-        legalMoves.add('c8');
+      // If current player's king is not checked, only then he can castle.
+      if (!currentPlayerChecked) {
+        if (canWhiteKingSideCastle && piece == PieceType.whiteKing) {
+          legalMoves.add('g1');
+        }
+        if (canWhiteQueenSideCastle && piece == PieceType.whiteKing) {
+          legalMoves.add('c1');
+        }
+        if (canBlackKingSideCastle && piece == PieceType.blackKing) {
+          legalMoves.add('g8');
+        }
+        if (canBlackQueenSideCastle && piece == PieceType.blackKing) {
+          legalMoves.add('c8');
+        }
       }
     }
 
