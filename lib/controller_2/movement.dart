@@ -1,8 +1,8 @@
-// First four offsets: vertical, left diagonal, right diagonal, horizontal.
+// First four offsets: horizontal, vertical, left diagonal, right diagonal.
 // Last four offsets corresponds to Knight movement direction.
 
 class Movement {
-  static const List<int> allDirectionalOffsets = [1, 9, 8, 7, 10, 17, 15, 6];
+  static const List<int> allDirectionalOffsets = [1, 8, 7, 9, 10, 17, 15, 6];
 
   static Movement getKingMovement() => Movement(
         directionalOffsets: allDirectionalOffsets.sublist(0, 4),
@@ -15,7 +15,7 @@ class Movement {
       );
 
   static Movement getBishopMovement() => Movement(
-        directionalOffsets: [1, 2],
+        directionalOffsets: allDirectionalOffsets.sublist(2, 4),
         maxStep: 8,
       );
 
@@ -26,12 +26,12 @@ class Movement {
       );
 
   static Movement getRookMovement() => Movement(
-        directionalOffsets: allDirectionalOffsets.sublist(0, 3),
+        directionalOffsets: allDirectionalOffsets.sublist(0, 2),
         maxStep: 8,
       );
 
   static Movement getPawnMovement() => Movement(
-        directionalOffsets: allDirectionalOffsets.sublist(0),
+        directionalOffsets: allDirectionalOffsets.sublist(1, 2),
         maxStep: 1,
         mirrorDirection: false,
       );

@@ -60,7 +60,7 @@ class Utility {
   static void debugBoard(List<GamePiece?> board) {
     for (int i = 0; i < board.length; i++) {
       if (board[i] != null) {
-        stdout.write(board[i]);
+        stdout.write(board[i]!.fenChar);
       } else {
         stdout.write('+');
       }
@@ -75,4 +75,20 @@ class Utility {
   /// Convert board index to location.
   static String convertBoardIndexToLocation(int boardIndex) =>
       '${files[boardIndex % 8]}${ranks[ranks.length - (boardIndex / 8).floor() - 1]}';
+
+  /// Convert location to board index.
+  static int convertLocationToBoardIndex(String loc) =>
+      ((ranks.length - ranks.indexOf(loc[1]) - 1) * ranks.length) +
+      files.indexOf(loc[0]);
+
+  /// Get manhattan distance between two board indices.
+  static int getDistanceBetweenBoardIndices(int firstIndex, int secondIndex) {
+    int x1 = firstIndex % files.length;
+    int y1 = (firstIndex / files.length).floor();
+
+    int x2 = secondIndex % ranks.length;
+    int y2 = (secondIndex / ranks.length).floor();
+
+    return (y2 - y1).abs() + (x2 - x1).abs();
+  }
 }

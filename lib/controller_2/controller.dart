@@ -35,9 +35,11 @@ class ChessController {
       }
       // Add piece condition.
       else {
+        int index = _board.length;
         _board.add(Utility.allPieces
             .firstWhere((piece) => piece.fenChar == configFen[itr])
-          ..currentLocation = Utility.convertBoardIndexToLocation(itr));
+            .copyWith(
+                currentLocation: Utility.convertBoardIndexToLocation(index)));
       }
     }
   }
