@@ -80,27 +80,27 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     // Initialize Chess Controller.
-    chessController = ChessController(
-        checkCallback: (PieceColor color) =>
-            _showCheckDialog(pieceColor: color),
-        checkMateCallback: (PieceColor color) =>
-            _showCheckDialog(pieceColor: color, checkmate: true),
-        computerColor: widget.isSinglePlayer ? PieceColor.black : null,
-        moveDoneCallback: () async {
-          if (agent != null) {
-            final List<String> move = await agent!.sendMove();
+    chessController = ChessController();
+    // checkCallback: (PieceColor color) =>
+    //     _showCheckDialog(pieceColor: color),
+    // checkMateCallback: (PieceColor color) =>
+    //     _showCheckDialog(pieceColor: color, checkmate: true),
+    // computerColor: widget.isSinglePlayer ? PieceColor.black : null,
+    // moveDoneCallback: () async {
+    //   if (agent != null) {
+    //     final List<String> move = await agent!.sendMove();
 
-            if (move.isNotEmpty) {
-              final String fromPos = move.first;
-              final String toPos = move.last;
+    //     if (move.isNotEmpty) {
+    //       final String fromPos = move.first;
+    //       final String toPos = move.last;
 
-              // Agent makes the move.
-              if (chessController.currentTurnColor == PieceColor.black) {
-                chessController.makeMove(fromPos: fromPos, toPos: toPos);
-              }
-            }
-          }
-        });
+    //       // Agent makes the move.
+    //       if (chessController.currentTurnColor == PieceColor.black) {
+    //         chessController.makeMove(fromPos: fromPos, toPos: toPos);
+    //       }
+    //     }
+    //   }
+    // });
 
     // Initialize Agent.
     agent = widget.isSinglePlayer
@@ -114,7 +114,7 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   void dispose() {
-    chessController.dispose();
+    // chessController.dispose();
     super.dispose();
   }
 
@@ -198,11 +198,11 @@ class _GameScreenState extends State<GameScreen> {
                                     ),
                                     PopupMenuItem(
                                       onTap: () async {
-                                        String url =
-                                            "https://lichess.org/paste?pgn=${chessController.gamePGN.replaceAll(' ', '+')}";
-                                        if (await canLaunch(url)) {
-                                          await launch(url);
-                                        }
+                                        // String url =
+                                        //     "https://lichess.org/paste?pgn=${chessController.gamePGN.replaceAll(' ', '+')}";
+                                        // if (await canLaunch(url)) {
+                                        //   await launch(url);
+                                        // }
                                       },
                                       child: const Text(
                                         'Export PGN',
@@ -240,7 +240,7 @@ class _GameScreenState extends State<GameScreen> {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        chessController.undoMove();
+                        // chessController.undoMove();
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(6.0),

@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:flutter_chess/controller_2/enums.dart';
-import 'package:flutter_chess/controller_2/game_piece.dart';
+import 'package:flutter_chess/controller/enums.dart';
+import 'package:flutter_chess/controller/game_piece.dart';
 
 import 'movement.dart';
 

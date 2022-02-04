@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chess/constants.dart';
-import 'package:flutter_chess/controller/controller.dart';
+import 'package:flutter_chess/controller/enums.dart';
+import 'package:flutter_chess/controller/utility.dart';
 
 enum ChessBoardCellMode {
   normal,
@@ -14,32 +15,32 @@ class ChessBoardCell extends StatelessWidget {
     Key? key,
     required this.index,
     this.pieceType,
+    this.pieceColor,
     this.onTapCallback,
     this.cellMode = ChessBoardCellMode.normal,
   }) : super(key: key);
 
   final int index;
   final PieceType? pieceType;
+  final PieceColor? pieceColor;
   final void Function(ChessBoardCell cell)? onTapCallback;
   final ChessBoardCellMode cellMode;
 
-  PieceColor? get pieceColor => pieceType != null
-      ? BaseChessController.getPieceTypeColor(pieceType!)
-      : null;
-
   String get cellLocation {
-    return '${BaseChessController.files[(index % 8)]}${(8 - (index / 8).floor()).toString()}';
+    return Utility.convertBoardIndexToLocation(index);
   }
 
   ChessBoardCell copyWith({
     int? index,
     PieceType? pieceType,
+    PieceColor? pieceColor,
     void Function(ChessBoardCell cell)? onTapCallback,
     ChessBoardCellMode? cellMode,
   }) =>
       ChessBoardCell(
         index: index ?? this.index,
         pieceType: pieceType,
+        pieceColor: pieceColor,
         onTapCallback: onTapCallback ?? this.onTapCallback,
         cellMode: cellMode ?? this.cellMode,
       );
@@ -64,41 +65,29 @@ class ChessBoardCell extends StatelessWidget {
         break;
     }
     switch (pieceType) {
-      case PieceType.blackPawn:
-        _cellImage = Image.asset('assets/images/pawn/pawn-black.png');
+      case PieceType.pawn:
+        _cellImage = Image.asset(
+            "assets/images/pawn/pawn-${pieceColor == PieceColor.white ? 'white' : 'black'}.png");
         break;
-      case PieceType.whitePawn:
-        _cellImage = Image.asset('assets/images/pawn/pawn-white.png');
+      case PieceType.king:
+        _cellImage = Image.asset(
+            "assets/images/king/king-${pieceColor == PieceColor.white ? 'white' : 'black'}.png");
         break;
-      case PieceType.blackKing:
-        _cellImage = Image.asset('assets/images/king/king-black.png');
+      case PieceType.queen:
+        _cellImage = Image.asset(
+            "assets/images/queen/queen-${pieceColor == PieceColor.white ? 'white' : 'black'}.png");
         break;
-      case PieceType.whiteKing:
-        _cellImage = Image.asset('assets/images/king/king-white.png');
+      case PieceType.rook:
+        _cellImage = Image.asset(
+            "assets/images/rook/rook-${pieceColor == PieceColor.white ? 'white' : 'black'}.png");
         break;
-      case PieceType.blackQueen:
-        _cellImage = Image.asset('assets/images/queen/queen-black.png');
+      case PieceType.knight:
+        _cellImage = Image.asset(
+            "assets/images/knight/knight-${pieceColor == PieceColor.white ? 'white' : 'black'}.png");
         break;
-      case PieceType.whiteQueen:
-        _cellImage = Image.asset('assets/images/queen/queen-white.png');
-        break;
-      case PieceType.blackRook:
-        _cellImage = Image.asset('assets/images/rook/rook-black.png');
-        break;
-      case PieceType.whiteRook:
-        _cellImage = Image.asset('assets/images/rook/rook-white.png');
-        break;
-      case PieceType.blackKnight:
-        _cellImage = Image.asset('assets/images/knight/knight-black.png');
-        break;
-      case PieceType.whiteKnight:
-        _cellImage = Image.asset('assets/images/knight/knight-white.png');
-        break;
-      case PieceType.blackBishop:
-        _cellImage = Image.asset('assets/images/bishop/bishop-black.png');
-        break;
-      case PieceType.whiteBishop:
-        _cellImage = Image.asset('assets/images/bishop/bishop-white.png');
+      case PieceType.bishop:
+        _cellImage = Image.asset(
+            "assets/images/bishop/bishop-${pieceColor == PieceColor.white ? 'white' : 'black'}.png");
         break;
       default:
         break;

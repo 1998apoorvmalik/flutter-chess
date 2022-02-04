@@ -37,12 +37,14 @@ class _ChessBoardState extends State<ChessBoard> {
       setState(() {
         _selectedCell = null;
       });
-    } else if (widget.controller.legalMovesForCurrentPlayer
+    } else if (widget.controller.legalMoves
         .where((move) =>
-            move.first == _selectedCell!.cellLocation &&
-            move.last == cell.cellLocation)
+            move.initialLocation == _selectedCell!.cellLocation &&
+            move.finalLocation == cell.cellLocation)
         .isNotEmpty) {
-      _movePiece(cell);
+      _playMove(widget.controller.legalMoves.firstWhere((move) =>
+          move.initialLocation == _selectedCell!.cellLocation &&
+          move.finalLocation == cell.cellLocation));
     } else {
       _selectedCell = null;
       _refreshBoard();
@@ -55,23 +57,24 @@ class _ChessBoardState extends State<ChessBoard> {
     if (_selectedCell != null) {
       cells[_selectedCell!.index] = _selectedCell!.copyWith(
           cellMode: ChessBoardCellMode.selected,
-          pieceType: _selectedCell!.pieceType);
+          pieceType: _selectedCell!.pieceType,
+          pieceColor: _selectedCell!.pieceColor);
     }
   }
 
   // This method will highlight valid next move cells for a selected piece.
   void _highlightValidMovesForSelectedCell() {
     // Check if the selected cell is not empty.
-    if (_selectedCell != null &&
-        _selectedCell!.pieceType != null &&
+    if (_selectedCell!.pieceType != null &&
         widget.agentPlayingColor !=
             (widget.controller.isWhiteTurn
                 ? PieceColor.white
                 : PieceColor.black)) {
       widget.controller
-          .getLegalMovesForSelectedPos(_selectedCell!.cellLocation)
-          .forEach((pos) {
-        int index = cells.indexWhere((cell) => cell.cellLocation == pos);
+          .getLegalMovesForSelectedLocation(_selectedCell!.cellLocation)
+          .forEach((move) {
+        int index =
+            cells.indexWhere((cell) => cell.cellLocation == move.finalLocation);
 
         cells[index] = cells[index].copyWith(
             cellMode: cells[index].pieceColor != null &&
@@ -83,17 +86,14 @@ class _ChessBoardState extends State<ChessBoard> {
     }
   }
 
-  void _movePiece(ChessBoardCell nextCell) {
+  void _playMove(GameMove move) {
     if (_selectedCell != null &&
         widget.agentPlayingColor !=
             (widget.controller.isWhiteTurn
                 ? PieceColor.white
                 : PieceColor.black)) {
       // Controller update.
-      widget.controller.makeMove(
-        fromPos: _selectedCell!.cellLocation,
-        toPos: nextCell.cellLocation,
-      );
+      widget.controller.playMove(move);
       setState(() {
         // Deselect the currently selected cell.
         _selectedCell = null;
@@ -109,8 +109,8 @@ class _ChessBoardState extends State<ChessBoard> {
         (index) => ChessBoardCell(
           index: index,
           onTapCallback: onCellTap,
-          pieceType: widget.controller.board[7 - (index / 8).floor()]
-              [(index % 8)],
+          pieceType: widget.controller.board[index]?.pieceType,
+          pieceColor: widget.controller.board[index]?.pieceColor,
         ),
       );
     });
@@ -119,9 +119,9 @@ class _ChessBoardState extends State<ChessBoard> {
   @override
   void initState() {
     _refreshBoard();
-    widget.controller.sceneRefreshCallback = () {
-      _refreshBoard();
-    };
+    // widget.controller.sceneRefreshCallback = () {
+    //   _refreshBoard();
+    // };
     super.initState();
   }
 
@@ -183,7 +183,7 @@ class _ChessBoardState extends State<ChessBoard> {
                             fontSize: _sizeQuantizer * 4),
                       )
                     : Text(
-                        BaseChessController.files[index - 1],
+                        Utility.files[index - 1],
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: _sizeQuantizer * 4,

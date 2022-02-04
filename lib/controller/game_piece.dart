@@ -1,6 +1,7 @@
-import 'package:flutter_chess/controller_2/movement.dart';
-import 'package:flutter_chess/controller_2/utility.dart';
-import 'package:flutter_chess/controller_2/enums.dart';
+import 'package:flutter_chess/controller/enums.dart';
+import 'package:flutter_chess/controller/move.dart';
+import 'package:flutter_chess/controller/movement.dart';
+import 'package:flutter_chess/controller/utility.dart';
 
 class GamePiece {
   GamePiece({
@@ -31,7 +32,7 @@ class GamePiece {
   List<String> previousLocations;
 
   /// Finds all valid locations for the piece to move to.
-  List<String> getMovementLocations(List<GamePiece?> board) {
+  List<GameMove> getMovementLocations(List<GamePiece?> board) {
     if (currentLocation.isEmpty) {
       return [];
     }
@@ -55,7 +56,12 @@ class GamePiece {
     }
 
     return validBoardIndices
-        .map((index) => Utility.convertBoardIndexToLocation(index))
+        .map((index) => GameMove(
+              pieceColor: pieceColor,
+              pieceType: pieceType,
+              initialLocation: currentLocation,
+              finalLocation: Utility.convertBoardIndexToLocation(index),
+            ))
         .toList();
   }
 
