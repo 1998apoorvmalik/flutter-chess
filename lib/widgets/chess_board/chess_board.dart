@@ -79,7 +79,8 @@ class _ChessBoardState extends State<ChessBoard> {
                     cells[index].pieceColor != _selectedCell!.pieceColor
                 ? ChessBoardCellMode.danger
                 : ChessBoardCellMode.path,
-            pieceType: cells[index].pieceType);
+            pieceType: cells[index].pieceType,
+            pieceColor: cells[index].pieceColor);
       });
     }
   }

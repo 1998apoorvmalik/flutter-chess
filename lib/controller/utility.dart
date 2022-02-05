@@ -40,21 +40,18 @@ class Utility {
     }
   }
 
-  /// Utility function to check if the board location (index) after game piece piece move is valid.
+  /// Utility function to check if the next board index after adding an offset to previous board index is valid.
   static bool isValidMoveIndex(
-      {required List<GamePiece?> board,
-      required int currentIndex,
-      required int offset,
-      bool isAttackCheck = false}) {
+    int currentIndex,
+    int offset,
+  ) {
     int nextIndex = currentIndex + offset;
 
     return (nextIndex > -1 &&
         nextIndex < ranks.length * ranks.length &&
         Utility.getDistanceBetweenBoardIndices(currentIndex, nextIndex) ==
             Utility.getDistanceBetweenBoardIndices(
-                Utility.middleIndex, Utility.middleIndex + offset) &&
-        board[nextIndex]?.pieceColor != board[currentIndex]?.pieceColor &&
-        (isAttackCheck ? board[nextIndex] != null : true));
+                Utility.middleIndex, Utility.middleIndex + offset));
   }
 
   /// Convert board index to location.

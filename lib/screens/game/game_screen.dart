@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_chess/agents/agents.dart';
@@ -166,11 +167,10 @@ class _GameScreenState extends State<GameScreen> {
     // Device screen information.
     late final double _deviceWidth = MediaQuery.of(context).size.width;
     late final double _deviceHeight = MediaQuery.of(context).size.height;
-    late final double _aspectRatio = _deviceWidth / _deviceHeight;
 
     // Board size.
-    late final double _boardSize =
-        _aspectRatio < 0.64 ? _deviceWidth / 1.08 : (6 * _deviceHeight / 11);
+    late final double _boardSize = min(_deviceWidth, _deviceHeight);
+    // _aspectRatio < 0.64 ? _deviceWidth / 1.08 : (6 * _deviceHeight / 11);
 
     return Scaffold(
       body: SafeArea(
