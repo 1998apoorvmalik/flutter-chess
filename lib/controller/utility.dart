@@ -10,6 +10,7 @@ class Utility {
   static const String files = 'abcdefgh';
   static const defaultFEN =
       'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+  static const int middleIndex = 28;
 
   static List<GamePiece> allPieces = [
     GamePiece(pieceType: PieceType.king, pieceColor: PieceColor.white),

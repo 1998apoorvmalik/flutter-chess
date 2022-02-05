@@ -55,8 +55,9 @@ class GamePiece {
             Utility.getDistanceBetweenBoardIndices(
                     boardIndex, nextBoardIndex) ==
                 Utility.getDistanceBetweenBoardIndices(
-                        28, 28 + _movement.directionalOffsets[i]) *
-                    j &&
+                    Utility.middleIndex,
+                    Utility.middleIndex +
+                        (_movement.directionalOffsets[i]) * j) &&
             board[nextBoardIndex]?.pieceColor != _pieceColor) {
           validBoardIndices.add(nextBoardIndex);
 
