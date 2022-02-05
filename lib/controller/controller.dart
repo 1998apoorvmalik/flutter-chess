@@ -1,5 +1,5 @@
 // Imports
-import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_chess/controller/enums.dart';
 import 'package:flutter_chess/controller/game_move.dart';
 import 'package:flutter_chess/controller/utility.dart';
@@ -115,7 +115,7 @@ class ChessController {
       // Add piece condition.
       else {
         int index = _board.length;
-        _board.add(Utility.allPieces
+        _board.add(GamePiece.allPieces
             .firstWhere((piece) => piece.fenChar == configFen[itr])
             .copyWith(
                 currentLocation: Utility.convertBoardIndexToLocation(index)));

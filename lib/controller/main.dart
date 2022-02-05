@@ -4,6 +4,4 @@ void main() {
   ChessController chessController = ChessController();
 
   Utility.debugBoard(chessController.board);
-
-  print(chessController.legalMoves);
 }

@@ -13,6 +13,20 @@ class GameMove {
   final PieceType pieceType;
   final PieceType? capturedPiece;
 
+  GameMove copyWith({
+    PieceColor? pieceColor,
+    PieceType? pieceType,
+    String? initialLocation,
+    String? finalLocation,
+    PieceType? capturedPiece,
+  }) =>
+      GameMove(
+          pieceColor: pieceColor ?? this.pieceColor,
+          pieceType: pieceType ?? this.pieceType,
+          initialLocation: initialLocation ?? this.initialLocation,
+          finalLocation: finalLocation ?? this.finalLocation,
+          capturedPiece: capturedPiece ?? this.capturedPiece);
+
   @override
   String toString() =>
       {'from': initialLocation, 'to': finalLocation}.toString();

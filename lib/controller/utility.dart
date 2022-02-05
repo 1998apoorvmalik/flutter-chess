@@ -3,47 +3,12 @@ import 'dart:io';
 import 'package:flutter_chess/controller/enums.dart';
 import 'package:flutter_chess/controller/game_piece.dart';
 
-import 'movement.dart';
-
 class Utility {
   static const String ranks = '12345678';
   static const String files = 'abcdefgh';
   static const defaultFEN =
       'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
   static const int middleIndex = 28;
-
-  static List<GamePiece> allPieces = [
-    GamePiece(pieceType: PieceType.king, pieceColor: PieceColor.white),
-    GamePiece(pieceType: PieceType.king, pieceColor: PieceColor.black),
-    GamePiece(pieceType: PieceType.rook, pieceColor: PieceColor.white),
-    GamePiece(pieceType: PieceType.rook, pieceColor: PieceColor.black),
-    GamePiece(pieceType: PieceType.bishop, pieceColor: PieceColor.white),
-    GamePiece(pieceType: PieceType.bishop, pieceColor: PieceColor.black),
-    GamePiece(pieceType: PieceType.queen, pieceColor: PieceColor.white),
-    GamePiece(pieceType: PieceType.queen, pieceColor: PieceColor.black),
-    GamePiece(pieceType: PieceType.knight, pieceColor: PieceColor.white),
-    GamePiece(pieceType: PieceType.knight, pieceColor: PieceColor.black),
-    GamePiece(pieceType: PieceType.pawn, pieceColor: PieceColor.white),
-    GamePiece(pieceType: PieceType.pawn, pieceColor: PieceColor.black),
-  ];
-
-  /// Returns given piece type movement.
-  static Movement getMovementforPieceType(PieceType pieceType) {
-    switch (pieceType) {
-      case PieceType.king:
-        return Movement.getKingMovement();
-      case PieceType.rook:
-        return Movement.getRookMovement();
-      case PieceType.bishop:
-        return Movement.getBishopMovement();
-      case PieceType.queen:
-        return Movement.getQueenMovement();
-      case PieceType.knight:
-        return Movement.getKnightMovement();
-      case PieceType.pawn:
-        return Movement.getPawnMovement();
-    }
-  }
 
   /// Converts piece type to fen character.
   static String convertPieceToFenChar(
@@ -73,6 +38,23 @@ class Utility {
         stdout.write('\n');
       }
     }
+  }
+
+  /// Utility function to check if the board location (index) after game piece piece move is valid.
+  static bool isValidMoveIndex(
+      {required List<GamePiece?> board,
+      required int currentIndex,
+      required int offset,
+      bool isAttackCheck = false}) {
+    int nextIndex = currentIndex + offset;
+
+    return (nextIndex > -1 &&
+        nextIndex < ranks.length * ranks.length &&
+        Utility.getDistanceBetweenBoardIndices(currentIndex, nextIndex) ==
+            Utility.getDistanceBetweenBoardIndices(
+                Utility.middleIndex, Utility.middleIndex + offset) &&
+        board[nextIndex]?.pieceColor != board[currentIndex]?.pieceColor &&
+        (isAttackCheck ? board[nextIndex] != null : true));
   }
 
   /// Convert board index to location.

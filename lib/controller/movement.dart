@@ -1,6 +1,8 @@
 // First four offsets: horizontal, vertical, left diagonal, right diagonal.
 // Last four offsets corresponds to Knight movement direction.
 
+import 'package:flutter_chess/controller/enums.dart';
+
 class Movement {
   static const List<int> allDirectionalOffsets = [1, 8, 7, 9, 10, 17, 15, 6];
 
@@ -29,10 +31,12 @@ class Movement {
         maxStep: 8,
       );
 
-  static Movement getPawnMovement() => Movement(
-        directionalOffsets: allDirectionalOffsets.sublist(1, 2),
+  static Movement getPawnMovement(PieceColor pieceColor) => Movement(
+        directionalOffsets: pieceColor == PieceColor.black
+            ? allDirectionalOffsets.sublist(1, 2)
+            : allDirectionalOffsets.sublist(1, 2).map((e) => -e).toList(),
         maxStep: 1,
-        mirrorDirection: true,
+        mirrorDirection: false,
       );
 
   Movement({
