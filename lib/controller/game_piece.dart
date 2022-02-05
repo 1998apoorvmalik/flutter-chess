@@ -43,22 +43,20 @@ class GamePiece {
     List<GameMove> specialMoves = [];
 
     int boardIndex = Utility.convertLocationToBoardIndex(piece.currentLocation);
-    GameMove gameMove = GameMove(
-        pieceColor: piece.pieceColor,
-        pieceType: piece.pieceType,
-        initialLocation: piece.currentLocation,
-        finalLocation: '');
+    GameMove gameMove =
+        GameMove.fromGamePiece(movedPiece: piece, finalLocation: '');
 
     if (piece.pieceType == PieceType.pawn) {
       // Pawn two step move check.
-      int finalIndex =
-          boardIndex + piece._movement.directionalOffsets.first * 2;
+      int offset = piece._movement.directionalOffsets.first;
+
       if ((piece.currentLocation[1] == '2' ||
               piece.currentLocation[1] == '7') &&
-          board[finalIndex] == null) {
+          board[boardIndex + offset] == null &&
+          board[boardIndex + offset * 2] == null) {
         specialMoves.add(gameMove.copyWith(
-            finalLocation: Utility.convertBoardIndexToLocation(
-                boardIndex + piece._movement.directionalOffsets.first * 2)));
+            finalLocation:
+                Utility.convertBoardIndexToLocation(boardIndex + offset * 2)));
       }
 
       // Pawn attack check.
@@ -93,23 +91,27 @@ class GamePiece {
       // Left diagonal attack test.
       if (pawnAttackPossible(rightDirectionTest: false)) {
         int finalIndex = boardIndex + leftDiagonalOffset;
+        GamePiece capturedPiece = board[finalIndex] == null
+            ? board[boardIndex + leftOffset]!
+            : board[finalIndex]!;
 
-        specialMoves.add(gameMove.copyWith(
+        specialMoves.add(GameMove.fromGamePiece(
+            movedPiece: piece,
             finalLocation: Utility.convertBoardIndexToLocation(finalIndex),
-            capturedPiece: board[finalIndex] == null
-                ? board[boardIndex + leftOffset]!.pieceType
-                : board[finalIndex]!.pieceType));
+            threatenedPiece: capturedPiece));
       }
 
       // Right diagonal attack test.
       if (pawnAttackPossible(rightDirectionTest: true)) {
         int finalIndex = boardIndex + rightDiagonalOffset;
+        GamePiece capturedPiece = board[finalIndex] == null
+            ? board[boardIndex + rightOffset]!
+            : board[finalIndex]!;
 
-        specialMoves.add(gameMove.copyWith(
+        specialMoves.add(GameMove.fromGamePiece(
+            movedPiece: piece,
             finalLocation: Utility.convertBoardIndexToLocation(finalIndex),
-            capturedPiece: board[finalIndex] == null
-                ? board[boardIndex + rightOffset]!.pieceType
-                : board[finalIndex]!.pieceType));
+            threatenedPiece: capturedPiece));
       }
     }
     return specialMoves;
@@ -160,9 +162,10 @@ class GamePiece {
 
     for (int i = 0; i < _movement.directionalOffsets.length; i++) {
       for (int j = 1; j <= _movement.maxStep; j++) {
-        int offset = _movement.directionalOffsets[i] * j;
-        int nextBoardIndex = boardIndex + offset;
-        if (Utility.isValidMoveIndex(boardIndex, offset) &&
+        int nextBoardIndex = boardIndex + _movement.directionalOffsets[i] * j;
+        if (Utility.isValidMoveIndex(
+                boardIndex, _movement.directionalOffsets[i],
+                multiplier: j) &&
             board[nextBoardIndex]?.pieceColor != _pieceColor) {
           validBoardIndices.add(nextBoardIndex);
 
@@ -177,14 +180,24 @@ class GamePiece {
         }
       }
     }
+    // return validBoardIndices
+    //     .map((index) => GameMove(
+    //           movedPieceColor: pieceColor,
+    //           movedPieceType: pieceType,
+    //           initialLocation: currentLocation,
+    //           finalLocation: Utility.convertBoardIndexToLocation(index),
+    //           threatendPieceLocation: board[index]?.currentLocation,
+    //           threatenedPieceColor: board[index]?.pieceColor,
+    //           threatenedPieceType: board[index]?.pieceType,
+    //         ))
+    //     .toList()
+    //   ..addAll(GamePiece.getSpecialMovesforGamePiece(this, board));
 
     return validBoardIndices
-        .map((index) => GameMove(
-              pieceColor: pieceColor,
-              pieceType: pieceType,
-              initialLocation: currentLocation,
-              finalLocation: Utility.convertBoardIndexToLocation(index),
-            ))
+        .map((index) => GameMove.fromBoard(
+            board: board,
+            initialLocation: currentLocation,
+            finalLocation: Utility.convertBoardIndexToLocation(index)))
         .toList()
       ..addAll(GamePiece.getSpecialMovesforGamePiece(this, board));
   }

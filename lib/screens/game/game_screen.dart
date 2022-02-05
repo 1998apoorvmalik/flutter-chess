@@ -240,8 +240,7 @@ class _GameScreenState extends State<GameScreen> {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        chessController.printBoard();
-                        // chessController.undoMove();
+                        chessController.undoMove();
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(6.0),

@@ -22,8 +22,9 @@ class ChessController {
   late PieceColor _currentTurnColor;
   late bool _isGameEnded;
   final List<GameMove> _legalMoves = [];
+  final List<GameMove> _moveHistory = [];
 
-  late final VoidCallback? sceneRefreshCallback;
+  VoidCallback? sceneRefreshCallback;
 
   // Getter for private properties.
   List<GamePiece?> get board => _board;
@@ -32,6 +33,7 @@ class ChessController {
   bool get isGameEnded => _isGameEnded;
   PieceColor get currentTurnColor => _currentTurnColor;
   List<GameMove> get legalMoves => _legalMoves;
+  List<GameMove> get moveHistory => _moveHistory;
 
   /// Returns legal moves for a given board location.
   List<GameMove> getLegalMovesForSelectedLocation(String loc) {
@@ -43,6 +45,7 @@ class ChessController {
     _isGameEnded = false;
     _currentTurnColor = PieceColor.white;
     _updateLegalMoves();
+    _moveHistory.clear();
   }
 
   /// Debug method to print the current state of the board
@@ -87,9 +90,53 @@ class ChessController {
           ? PieceColor.black
           : PieceColor.white;
 
+      // Add the move to move history.
+      _moveHistory.add(move);
+
       // Update legal moves.
       _updateLegalMoves();
     }
+  }
+
+  /// Undo the last played legal move.
+  void undoMove() {
+    if (moveHistory.isEmpty) {
+      return;
+    }
+
+    GameMove move = _moveHistory.removeLast();
+
+    board[Utility.convertLocationToBoardIndex(move.initialLocation)] = GamePiece
+        .allPieces
+        .firstWhere((piece) =>
+            piece.pieceColor == move.movedPieceColor &&
+            piece.pieceType == move.movedPieceType)
+        .copyWith(currentLocation: move.initialLocation);
+    board[Utility.convertLocationToBoardIndex(move.finalLocation)] = null;
+
+    if (move.threatenedPieceColor != null) {
+      int threatenedPieceIndex =
+          Utility.convertLocationToBoardIndex(move.threatendPieceLocation!);
+
+      board[threatenedPieceIndex] = GamePiece.allPieces
+          .firstWhere((piece) =>
+              piece.pieceColor == move.threatenedPieceColor &&
+              piece.pieceType == move.threatenedPieceType)
+          .copyWith(currentLocation: move.threatendPieceLocation);
+    }
+
+    // Execute scene refresh callback.
+    if (sceneRefreshCallback != null) {
+      sceneRefreshCallback!();
+    }
+
+    // Update current turn.
+    _currentTurnColor = _currentTurnColor == PieceColor.white
+        ? PieceColor.black
+        : PieceColor.white;
+
+    // Update legal moves.
+    _updateLegalMoves();
   }
 
   void _initializeFromFen(String fen) {

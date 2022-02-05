@@ -1,55 +1,61 @@
-// import 'package:flutter_chess/controller/controller.dart';
-// import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_chess/controller/controller.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-// int getMovesPermutationAtDepth(
-//     {required ChessController chessController, required int depth}) {
-//   int nMoves = 0;
+int getMovesPermutationAtDepth(
+    {required ChessController chessController, required int depth}) {
+  int nMoves = 0;
 
-//   if (depth > 0) {
-//     for (List<String> move in chessController.legalMovesForCurrentPlayer) {
-//       chessController.makeMove(fromPos: move.first, toPos: move.last);
-//       nMoves += getMovesPermutationAtDepth(
-//           chessController: chessController, depth: depth - 1);
+  if (depth > 0) {
+    for (GameMove move in chessController.legalMoves) {
+      chessController.playMove(move);
 
-//       chessController.undoMove();
-//     }
-//   } else {
-//     nMoves = 1;
-//   }
+      int newMoves = getMovesPermutationAtDepth(
+          chessController: chessController, depth: depth - 1);
+      nMoves += newMoves;
 
-//   return nMoves;
-// }
+      chessController.undoMove();
 
-// void main() {
-//   group('Chess Controller', () {
-//     final ChessController chessController = ChessController();
-//     int nMoves;
+      // if (depth == 3) {
+      //   print("${move.initialLocation}${move.finalLocation}: $newMoves");
+      // }
+    }
+  } else {
+    nMoves = 1;
+  }
 
-//     test('Controller Test at Depth 1', () {
-//       nMoves = getMovesPermutationAtDepth(
-//           chessController: chessController, depth: 1);
-//       expect(nMoves, 20);
-//     });
+  return nMoves;
+}
 
-//     test('Controller Test at Depth 2', () {
-//       nMoves = getMovesPermutationAtDepth(
-//           chessController: chessController, depth: 2);
+void main() {
+  group('Chess Controller', () {
+    final ChessController chessController = ChessController();
+    int nMoves;
 
-//       expect(nMoves, 400);
-//     });
+    test('Controller Test at Depth 1', () {
+      nMoves = getMovesPermutationAtDepth(
+          chessController: chessController, depth: 1);
+      expect(nMoves, 20);
+    });
 
-//     test('Controller Test at Depth 3', () {
-//       nMoves = getMovesPermutationAtDepth(
-//           chessController: chessController, depth: 3);
+    test('Controller Test at Depth 2', () {
+      nMoves = getMovesPermutationAtDepth(
+          chessController: chessController, depth: 2);
 
-//       expect(nMoves, 8902);
-//     });
+      expect(nMoves, 400);
+    });
 
-//     test('Controller Test at Depth 4', () {
-//       nMoves = getMovesPermutationAtDepth(
-//           chessController: chessController, depth: 4);
+    test('Controller Test at Depth 3', () {
+      nMoves = getMovesPermutationAtDepth(
+          chessController: chessController, depth: 3);
 
-//       expect(nMoves, 197281);
-//     });
-//   });
-// }
+      expect(nMoves, 8902);
+    });
+
+    // test('Controller Test at Depth 4', () {
+    //   nMoves = getMovesPermutationAtDepth(
+    //       chessController: chessController, depth: 4);
+
+    //   expect(nMoves, 197281);
+    // });
+  });
+}

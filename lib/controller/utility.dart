@@ -41,17 +41,16 @@ class Utility {
   }
 
   /// Utility function to check if the next board index after adding an offset to previous board index is valid.
-  static bool isValidMoveIndex(
-    int currentIndex,
-    int offset,
-  ) {
-    int nextIndex = currentIndex + offset;
+  static bool isValidMoveIndex(int currentIndex, int offset,
+      {int multiplier = 1}) {
+    int nextIndex = currentIndex + offset * multiplier;
 
     return (nextIndex > -1 &&
         nextIndex < ranks.length * ranks.length &&
         Utility.getDistanceBetweenBoardIndices(currentIndex, nextIndex) ==
             Utility.getDistanceBetweenBoardIndices(
-                Utility.middleIndex, Utility.middleIndex + offset));
+                    Utility.middleIndex, Utility.middleIndex + offset) *
+                multiplier);
   }
 
   /// Convert board index to location.
