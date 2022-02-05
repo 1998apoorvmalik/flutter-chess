@@ -18,6 +18,8 @@ class ChessBoardCell extends StatelessWidget {
     this.pieceColor,
     this.onTapCallback,
     this.cellMode = ChessBoardCellMode.normal,
+    this.cellLabelTop = '',
+    this.cellLabelBottom = '',
   }) : super(key: key);
 
   final int index;
@@ -25,6 +27,9 @@ class ChessBoardCell extends StatelessWidget {
   final PieceColor? pieceColor;
   final void Function(ChessBoardCell cell)? onTapCallback;
   final ChessBoardCellMode cellMode;
+
+  final String cellLabelTop;
+  final String cellLabelBottom;
 
   String get cellLocation {
     return Utility.convertBoardIndexToLocation(index);
@@ -36,6 +41,8 @@ class ChessBoardCell extends StatelessWidget {
     PieceColor? pieceColor,
     void Function(ChessBoardCell cell)? onTapCallback,
     ChessBoardCellMode? cellMode,
+    String? cellLabelTop,
+    String? cellLabelBottom,
   }) =>
       ChessBoardCell(
         index: index ?? this.index,
@@ -43,12 +50,30 @@ class ChessBoardCell extends StatelessWidget {
         pieceColor: pieceColor,
         onTapCallback: onTapCallback ?? this.onTapCallback,
         cellMode: cellMode ?? this.cellMode,
+        cellLabelTop: cellLabelTop ?? this.cellLabelTop,
+        cellLabelBottom: cellLabelBottom ?? this.cellLabelBottom,
       );
 
   @override
   Widget build(BuildContext context) {
     Image? _cellImage;
     Color _cellOverlayColor;
+
+    Color _cellColor = (index / 8).floor() % 2 != 0
+        ? (index % 2 == 0
+            ? Colors.black.withOpacity(kBlackOpacity)
+            : Colors.white.withOpacity(kBlackOpacity))
+        : (index % 2 == 0
+            ? Colors.white.withOpacity(kBlackOpacity)
+            : Colors.black.withOpacity(kBlackOpacity));
+
+    Color _textColor = (index / 8).floor() % 2 != 0
+        ? (index % 2 == 0
+            ? Colors.white.withOpacity(kBlackOpacity)
+            : Colors.black.withOpacity(kBlackOpacity))
+        : (index % 2 == 0
+            ? Colors.black.withOpacity(kBlackOpacity)
+            : Colors.white.withOpacity(kBlackOpacity));
 
     switch (cellMode) {
       case ChessBoardCellMode.normal:
@@ -100,18 +125,38 @@ class ChessBoardCell extends StatelessWidget {
         }
       },
       child: Container(
-        color: (index / 8).floor() % 2 != 0
-            ? (index % 2 == 0
-                ? Colors.black.withOpacity(kBlackOpacity)
-                : Colors.white.withOpacity(kBlackOpacity))
-            : (index % 2 == 0
-                ? Colors.white.withOpacity(kBlackOpacity)
-                : Colors.black.withOpacity(kBlackOpacity)),
+        color: _cellColor,
         child: Container(
           color: _cellOverlayColor,
-          child: Hero(
-            tag: index,
-            child: _cellImage ?? Container(),
+          child: Stack(
+            children: [
+              Align(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 2.0),
+                  child: Text(
+                    cellLabelTop,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: _textColor),
+                  ),
+                ),
+                alignment: Alignment.topLeft,
+              ),
+              Padding(
+                child: _cellImage ?? Container(),
+                padding: const EdgeInsets.all(4.0),
+              ),
+              Align(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 2.0),
+                  child: Text(
+                    cellLabelBottom,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: _textColor),
+                  ),
+                ),
+                alignment: Alignment.bottomRight,
+              ),
+            ],
           ),
         ),
       ),

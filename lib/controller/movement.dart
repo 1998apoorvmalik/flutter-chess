@@ -33,7 +33,7 @@ class Movement {
   static Movement getPawnMovement() => Movement(
         directionalOffsets: allDirectionalOffsets.sublist(1, 2),
         maxStep: 1,
-        mirrorDirection: false,
+        mirrorDirection: true,
       );
 
   Movement({

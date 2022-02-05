@@ -1,4 +1,5 @@
 // Imports
+import 'package:flutter/material.dart';
 import 'package:flutter_chess/controller/enums.dart';
 import 'package:flutter_chess/controller/move.dart';
 import 'package:flutter_chess/controller/utility.dart';
@@ -20,14 +21,16 @@ class ChessController {
 
   final List<GamePiece?> _board = [];
 
-  late bool _isWhiteTurn;
   late PieceColor _currentTurnColor;
   late bool _isGameEnded;
-  late final List<GameMove> _legalMoves;
+  final List<GameMove> _legalMoves = [];
+
+  late final VoidCallback? sceneRefreshCallback;
 
   // Getter for private properties.
   List<GamePiece?> get board => _board;
-  bool get isWhiteTurn => _isWhiteTurn;
+  bool get isWhiteTurn => _currentTurnColor == PieceColor.white ? true : false;
+  bool get isBlackTurn => _currentTurnColor == PieceColor.black ? true : false;
   bool get isGameEnded => _isGameEnded;
   PieceColor get currentTurnColor => _currentTurnColor;
   List<GameMove> get legalMoves => _legalMoves;
@@ -39,7 +42,6 @@ class ChessController {
 
   /// Used to reset the current game session.
   void reset() {
-    _isWhiteTurn = true;
     _isGameEnded = false;
     _currentTurnColor = PieceColor.white;
     _updateLegalMoves();
@@ -53,11 +55,34 @@ class ChessController {
         legalMoves.addAll(piece.getMovementLocations(_board));
       }
     }
-    _legalMoves = legalMoves;
+
+    _legalMoves.clear();
+    _legalMoves.addAll(legalMoves);
   }
 
+  /// Plays the legal game move.
   void playMove(GameMove move) {
-    print('played');
+    if (_legalMoves.contains(move)) {
+      // Moves the piece to final location.
+      _board[Utility.convertLocationToBoardIndex(move.finalLocation)] =
+          _board[Utility.convertLocationToBoardIndex(move.initialLocation)];
+
+      // Set game piece at initial location to null.
+      _board[Utility.convertLocationToBoardIndex(move.initialLocation)] = null;
+
+      // Execute scene refresh callback.
+      if (sceneRefreshCallback != null) {
+        sceneRefreshCallback!();
+      }
+
+      // Update current turn.
+      _currentTurnColor = _currentTurnColor == PieceColor.white
+          ? PieceColor.black
+          : PieceColor.white;
+
+      // Update legal moves.
+      _updateLegalMoves();
+    }
   }
 
   void _initializeFromFen(String fen) {

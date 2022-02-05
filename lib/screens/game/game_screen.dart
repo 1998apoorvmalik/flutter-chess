@@ -267,7 +267,7 @@ class _GameScreenState extends State<GameScreen> {
                 children: [
                   ChessBoard(
                       controller: chessController,
-                      agentPlayingColor:
+                      opponentColor:
                           widget.isSinglePlayer ? PieceColor.black : null,
                       size: _boardSize)
                 ],

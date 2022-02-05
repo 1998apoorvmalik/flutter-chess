@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_chess/constants.dart';
 import 'package:flutter_chess/controller/controller.dart';
 import 'package:flutter_chess/widgets/chess_board/chess_board_cell.dart';
 
@@ -7,12 +6,12 @@ class ChessBoard extends StatefulWidget {
   const ChessBoard(
       {Key? key,
       required this.controller,
-      this.agentPlayingColor = PieceColor.black,
+      this.opponentColor = PieceColor.black,
       this.size = 800})
       : super(key: key);
 
   final ChessController controller;
-  final PieceColor? agentPlayingColor;
+  final PieceColor? opponentColor;
   final double size;
 
   @override
@@ -25,51 +24,50 @@ class _ChessBoardState extends State<ChessBoard> {
   late List<ChessBoardCell> cells;
 
   void onCellTap(ChessBoardCell cell) {
+    PieceColor? cellColor = widget.controller.board[cell.index]?.pieceColor;
     // If no cell is selected, select a cell.
-    if (_selectedCell == null) {
-      setState(() {
-        _selectedCell = cell;
-        _highlightSelectedCell();
-        _highlightValidMovesForSelectedCell();
-      });
-    } else if (_selectedCell!.index == cell.index) {
-      _refreshBoard();
-      setState(() {
-        _selectedCell = null;
-      });
-    } else if (widget.controller.legalMoves
-        .where((move) =>
+    if (_selectedCell != null ||
+        (cellColor != null && cellColor != widget.opponentColor)) {
+      if (_selectedCell == null) {
+        setState(() {
+          _selectedCell = cell;
+          _highlightSelectedCell();
+          _highlightValidMovesForSelectedCell();
+        });
+      } else if (_selectedCell!.index == cell.index) {
+        _refreshBoard();
+        setState(() {
+          _selectedCell = null;
+        });
+      } else if (widget.controller.legalMoves
+          .where((move) =>
+              move.initialLocation == _selectedCell!.cellLocation &&
+              move.finalLocation == cell.cellLocation)
+          .isNotEmpty) {
+        _playMove(widget.controller.legalMoves.firstWhere((move) =>
             move.initialLocation == _selectedCell!.cellLocation &&
-            move.finalLocation == cell.cellLocation)
-        .isNotEmpty) {
-      _playMove(widget.controller.legalMoves.firstWhere((move) =>
-          move.initialLocation == _selectedCell!.cellLocation &&
-          move.finalLocation == cell.cellLocation));
-    } else {
-      _selectedCell = null;
-      _refreshBoard();
-      onCellTap(cell);
+            move.finalLocation == cell.cellLocation));
+      } else {
+        _selectedCell = null;
+        _refreshBoard();
+        onCellTap(cell);
+      }
     }
   }
 
   // This method highlights the tapped cell.
   void _highlightSelectedCell() {
-    if (_selectedCell != null) {
-      cells[_selectedCell!.index] = _selectedCell!.copyWith(
-          cellMode: ChessBoardCellMode.selected,
-          pieceType: _selectedCell!.pieceType,
-          pieceColor: _selectedCell!.pieceColor);
-    }
+    cells[_selectedCell!.index] = _selectedCell!.copyWith(
+        cellMode: ChessBoardCellMode.selected,
+        pieceType: _selectedCell!.pieceType,
+        pieceColor: _selectedCell!.pieceColor);
   }
 
   // This method will highlight valid next move cells for a selected piece.
   void _highlightValidMovesForSelectedCell() {
     // Check if the selected cell is not empty.
     if (_selectedCell!.pieceType != null &&
-        widget.agentPlayingColor !=
-            (widget.controller.isWhiteTurn
-                ? PieceColor.white
-                : PieceColor.black)) {
+        widget.opponentColor != widget.controller.currentTurnColor) {
       widget.controller
           .getLegalMovesForSelectedLocation(_selectedCell!.cellLocation)
           .forEach((move) {
@@ -88,7 +86,7 @@ class _ChessBoardState extends State<ChessBoard> {
 
   void _playMove(GameMove move) {
     if (_selectedCell != null &&
-        widget.agentPlayingColor !=
+        widget.opponentColor !=
             (widget.controller.isWhiteTurn
                 ? PieceColor.white
                 : PieceColor.black)) {
@@ -104,98 +102,39 @@ class _ChessBoardState extends State<ChessBoard> {
   // Updates the scene board configuration corresponding to the latest controller board.
   void _refreshBoard() {
     setState(() {
-      cells = List.generate(
-        64,
-        (index) => ChessBoardCell(
+      cells = List.generate(64, (index) {
+        return ChessBoardCell(
           index: index,
           onTapCallback: onCellTap,
+          cellLabelBottom:
+              index > 55 ? Utility.files[index - 56].toString() : '',
+          cellLabelTop:
+              index % 8 == 0 ? Utility.ranks[7 - (index ~/ 8)].toString() : '',
           pieceType: widget.controller.board[index]?.pieceType,
           pieceColor: widget.controller.board[index]?.pieceColor,
-        ),
-      );
+        );
+      });
     });
   }
 
   @override
   void initState() {
     _refreshBoard();
-    // widget.controller.sceneRefreshCallback = () {
-    //   _refreshBoard();
-    // };
+    widget.controller.sceneRefreshCallback = () {
+      _refreshBoard();
+    };
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    final double _sizeQuantizer = (widget.size / 100);
-
     return SizedBox(
       height: widget.size,
       width: widget.size,
-      child: Column(
-        children: [
-          Expanded(
-            flex: 8,
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: List.generate(
-                      8,
-                      (index) => Text(
-                        (8 - index).toString(),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: _sizeQuantizer * 4,
-                            color: _selectedCell != null &&
-                                    (_selectedCell!.index / 8).floor() == index
-                                ? Colors.black.withOpacity(kBlackOpacity)
-                                : kIconColor),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 16,
-                  child: GridView.count(
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 8,
-                    children: cells.toList(),
-                  ),
-                ),
-                Expanded(flex: 1, child: Container()),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(
-                10,
-                (index) => index < 1 || index > 8
-                    ? Text(
-                        '1',
-                        style: TextStyle(
-                            color: Colors.transparent,
-                            fontSize: _sizeQuantizer * 4),
-                      )
-                    : Text(
-                        Utility.files[index - 1],
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: _sizeQuantizer * 4,
-                            color: _selectedCell != null &&
-                                    (_selectedCell!.index % 8) + 1 == index
-                                ? Colors.black.withOpacity(kBlackOpacity)
-                                : kIconColor),
-                      ),
-              ),
-            ),
-          ),
-        ],
+      child: GridView.count(
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 8,
+        children: cells.toList(),
       ),
     );
   }
