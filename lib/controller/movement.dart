@@ -22,7 +22,6 @@ class Movement {
   static Movement getKnightMovement() => Movement(
         directionalOffsets: allDirectionalOffsets.sublist(4),
         maxStep: 1,
-        allowJump: true,
       );
 
   static Movement getRookMovement() => Movement(
@@ -40,19 +39,15 @@ class Movement {
     required List<int> directionalOffsets,
     required int maxStep,
     bool mirrorDirection = true,
-    bool allowJump = false,
   })  : _directionalOffsets = mirrorDirection
             ? directionalOffsets.expand((dir) => [-dir, dir]).toList()
             : directionalOffsets,
-        _maxStep = maxStep,
-        _allowJump = allowJump;
+        _maxStep = maxStep;
 
   final List<int> _directionalOffsets;
   final int _maxStep;
-  final bool _allowJump;
 
   // Getter for private properties.
   List<int> get directionalOffsets => _directionalOffsets;
   int get maxStep => _maxStep;
-  bool get allowJump => _allowJump;
 }

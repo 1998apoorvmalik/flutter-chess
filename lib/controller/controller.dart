@@ -1,20 +1,18 @@
 // Imports
 import 'package:flutter/material.dart';
 import 'package:flutter_chess/controller/enums.dart';
-import 'package:flutter_chess/controller/move.dart';
+import 'package:flutter_chess/controller/game_move.dart';
 import 'package:flutter_chess/controller/utility.dart';
 import 'package:flutter_chess/controller/game_piece.dart';
 
 // Exports
 export 'package:flutter_chess/controller/enums.dart';
-export 'package:flutter_chess/controller/move.dart';
+export 'package:flutter_chess/controller/game_move.dart';
 export 'package:flutter_chess/controller/utility.dart';
 export 'package:flutter_chess/controller/game_piece.dart';
 
 class ChessController {
-  ChessController(
-      {String fen =
-          'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'}) {
+  ChessController({String fen = Utility.defaultFEN}) {
     _initializeFromFen(fen);
     reset();
   }
@@ -47,6 +45,11 @@ class ChessController {
     _updateLegalMoves();
   }
 
+  /// Debug method to print the current state of the board
+  void printBoard() {
+    Utility.debugBoard(_board);
+  }
+
   /// Updates legal moves for the current player.
   void _updateLegalMoves() {
     List<GameMove> legalMoves = [];
@@ -63,9 +66,13 @@ class ChessController {
   /// Plays the legal game move.
   void playMove(GameMove move) {
     if (_legalMoves.contains(move)) {
+      // Get the board's initial and final indices from the given move.
+      int initialIndex =
+          Utility.convertLocationToBoardIndex(move.initialLocation);
+      int finalIndex = Utility.convertLocationToBoardIndex(move.finalLocation);
+
       // Moves the piece to final location.
-      _board[Utility.convertLocationToBoardIndex(move.finalLocation)] =
-          _board[Utility.convertLocationToBoardIndex(move.initialLocation)];
+      _board[finalIndex] = _board[initialIndex]!..movePiece(move);
 
       // Set game piece at initial location to null.
       _board[Utility.convertLocationToBoardIndex(move.initialLocation)] = null;

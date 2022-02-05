@@ -6,8 +6,10 @@ import 'package:flutter_chess/controller/game_piece.dart';
 import 'movement.dart';
 
 class Utility {
-  static String ranks = '12345678';
-  static String files = 'abcdefgh';
+  static const String ranks = '12345678';
+  static const String files = 'abcdefgh';
+  static const defaultFEN =
+      'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
   static List<GamePiece> allPieces = [
     GamePiece(pieceType: PieceType.king, pieceColor: PieceColor.white),

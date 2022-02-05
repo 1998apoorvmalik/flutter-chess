@@ -1,5 +1,5 @@
 import 'package:flutter_chess/controller/enums.dart';
-import 'package:flutter_chess/controller/move.dart';
+import 'package:flutter_chess/controller/game_move.dart';
 import 'package:flutter_chess/controller/movement.dart';
 import 'package:flutter_chess/controller/utility.dart';
 
@@ -7,13 +7,14 @@ class GamePiece {
   GamePiece({
     required PieceType pieceType,
     required PieceColor pieceColor,
+    List<String>? previousLocations,
     this.currentLocation = '',
-    this.previousLocations = const [],
   })  : _pieceType = pieceType,
         _pieceColor = pieceColor,
         _fenChar = Utility.convertPieceToFenChar(
             pieceType: pieceType, pieceColor: pieceColor),
-        _movement = Utility.getMovementforPieceType(pieceType);
+        _movement = Utility.getMovementforPieceType(pieceType),
+        previousLocations = previousLocations ?? [];
 
   // Private properties.
   final PieceType _pieceType;
@@ -27,9 +28,15 @@ class GamePiece {
   Movement get movement => _movement;
   String get fenChar => _fenChar;
 
-  // Public properties
+  // Public properties.
   String currentLocation;
   List<String> previousLocations;
+
+  /// Moves the piece as defined by game move.
+  void movePiece(GameMove move) {
+    previousLocations.add(move.initialLocation);
+    currentLocation = move.finalLocation;
+  }
 
   /// Finds all valid locations for the piece to move to.
   List<GameMove> getMovementLocations(List<GamePiece?> board) {
@@ -45,10 +52,17 @@ class GamePiece {
         int nextBoardIndex = boardIndex + _movement.directionalOffsets[i] * j;
         if (nextBoardIndex > -1 &&
             nextBoardIndex < board.length &&
-            Utility.getDistanceBetweenBoardIndices(boardIndex, nextBoardIndex) <
-                Utility.files.length &&
+            Utility.getDistanceBetweenBoardIndices(
+                    boardIndex, nextBoardIndex) ==
+                Utility.getDistanceBetweenBoardIndices(
+                        28, 28 + _movement.directionalOffsets[i]) *
+                    j &&
             board[nextBoardIndex]?.pieceColor != _pieceColor) {
           validBoardIndices.add(nextBoardIndex);
+
+          if (board[nextBoardIndex]?.pieceType != null) {
+            break;
+          }
         } else {
           break;
         }
