@@ -1,6 +1,5 @@
 import 'package:flutter_chess/controller/enums.dart';
 import 'package:flutter_chess/controller/game_piece.dart';
-import 'package:flutter_chess/controller/utility.dart';
 
 class GameMove {
   GameMove({
@@ -8,9 +7,9 @@ class GameMove {
     required this.movedPieceType,
     required this.initialLocation,
     required this.finalLocation,
-    this.threatenedPieceColor,
-    this.threatenedPieceType,
-    this.threatendPieceLocation,
+    this.capturedPieceColor,
+    this.capturedPieceType,
+    this.capturedPieceLocation,
   });
 
   factory GameMove.fromGamePiece(
@@ -22,27 +21,27 @@ class GameMove {
           movedPieceType: movedPiece.pieceType,
           initialLocation: movedPiece.currentLocation,
           finalLocation: finalLocation,
-          threatenedPieceColor: threatenedPiece?.pieceColor,
-          threatenedPieceType: threatenedPiece?.pieceType,
-          threatendPieceLocation: threatenedPiece?.currentLocation);
+          capturedPieceColor: threatenedPiece?.pieceColor,
+          capturedPieceType: threatenedPiece?.pieceType,
+          capturedPieceLocation: threatenedPiece?.currentLocation);
 
-  factory GameMove.fromBoard(
-      {required List<GamePiece?> board,
-      required String initialLocation,
-      required String finalLocation}) {
-    GamePiece movedPiece =
-        board[Utility.convertLocationToBoardIndex(initialLocation)]!;
-    GamePiece? threatenedPiece =
-        board[Utility.convertLocationToBoardIndex(finalLocation)];
-    return GameMove(
-        movedPieceColor: movedPiece.pieceColor,
-        movedPieceType: movedPiece.pieceType,
-        initialLocation: initialLocation,
-        finalLocation: finalLocation,
-        threatenedPieceColor: threatenedPiece?.pieceColor,
-        threatenedPieceType: threatenedPiece?.pieceType,
-        threatendPieceLocation: threatenedPiece?.currentLocation);
-  }
+  // factory GameMove.fromBoard(
+  //     {required List<GamePiece?> board,
+  //     required String initialLocation,
+  //     required String finalLocation}) {
+  //   GamePiece movedPiece =
+  //       board[Utility.convertLocationToBoardIndex(initialLocation)]!;
+  //   GamePiece? threatenedPiece =
+  //       board[Utility.convertLocationToBoardIndex(finalLocation)];
+  //   return GameMove(
+  //       movedPieceColor: movedPiece.pieceColor,
+  //       movedPieceType: movedPiece.pieceType,
+  //       initialLocation: initialLocation,
+  //       finalLocation: finalLocation,
+  //       capturedPieceColor: threatenedPiece?.pieceColor,
+  //       capturedPieceType: threatenedPiece?.pieceType,
+  //       capturedPieceLocation: threatenedPiece?.currentLocation);
+  // }
 
   // Moved piece description.
   final PieceColor movedPieceColor;
@@ -51,28 +50,28 @@ class GameMove {
   final String finalLocation;
 
   // Threatened piece description.
-  final PieceColor? threatenedPieceColor;
-  final PieceType? threatenedPieceType;
-  final String? threatendPieceLocation;
+  final PieceColor? capturedPieceColor;
+  final PieceType? capturedPieceType;
+  final String? capturedPieceLocation;
 
   GameMove copyWith({
     PieceColor? movedPieceColor,
     PieceType? movedPieceType,
     String? initialLocation,
     String? finalLocation,
-    PieceColor? threatenedPieceColor,
-    PieceType? threatenedPieceType,
-    String? threatendPieceLocation,
+    PieceColor? capturedPieceColor,
+    PieceType? capturedPieceType,
+    String? capturedPieceLocation,
   }) =>
       GameMove(
         movedPieceColor: movedPieceColor ?? this.movedPieceColor,
         movedPieceType: movedPieceType ?? this.movedPieceType,
         initialLocation: initialLocation ?? this.initialLocation,
         finalLocation: finalLocation ?? this.finalLocation,
-        threatenedPieceColor: threatenedPieceColor ?? this.threatenedPieceColor,
-        threatenedPieceType: threatenedPieceType ?? this.threatenedPieceType,
-        threatendPieceLocation:
-            threatendPieceLocation ?? this.threatendPieceLocation,
+        capturedPieceColor: capturedPieceColor ?? this.capturedPieceColor,
+        capturedPieceType: capturedPieceType ?? this.capturedPieceType,
+        capturedPieceLocation:
+            capturedPieceLocation ?? this.capturedPieceLocation,
       );
 
   @override

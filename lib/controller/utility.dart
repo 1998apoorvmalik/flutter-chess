@@ -11,7 +11,7 @@ class Utility {
   static const int middleIndex = 28;
 
   /// Converts piece type to fen character.
-  static String convertPieceToFenChar(
+  static String gamePieceToFenChar(
       {required PieceType pieceType, required PieceColor pieceColor}) {
     String pieceName = pieceType.toString().split('.').last;
     String fenChar =
@@ -22,6 +22,18 @@ class Utility {
     }
 
     return fenChar;
+  }
+
+  static GamePiece fenCharToGamePiece(String fenChar) {
+    PieceColor pieceColor =
+        fenChar.toUpperCase() != fenChar ? PieceColor.black : PieceColor.white;
+
+    PieceType pieceType = fenChar.toUpperCase() == 'N'
+        ? PieceType.knight
+        : PieceType.values.firstWhere((pieceType) =>
+            pieceType.toString().split('.').last[0] == fenChar.toLowerCase());
+
+    return GamePiece(pieceColor: pieceColor, pieceType: pieceType);
   }
 
   /// Utility function to print current state of the board.

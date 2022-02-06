@@ -51,11 +51,18 @@ void main() {
       expect(nMoves, 8902);
     });
 
-    // test('Controller Test at Depth 4', () {
-    //   nMoves = getMovesPermutationAtDepth(
-    //       chessController: chessController, depth: 4);
+    test('Controller Test at Depth 4', () {
+      nMoves = getMovesPermutationAtDepth(
+          chessController: chessController, depth: 4);
 
-    //   expect(nMoves, 197281);
+      expect(nMoves, 197756);
+    });
+
+    // test('Controller Test at Depth 5', () {
+    //   nMoves = getMovesPermutationAtDepth(
+    //       chessController: chessController, depth: 5);
+
+    //   expect(nMoves, 4865609);
     // });
   });
 }
