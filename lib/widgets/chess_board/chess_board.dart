@@ -24,7 +24,8 @@ class _ChessBoardState extends State<ChessBoard> {
   late List<ChessBoardCell> cells;
 
   void onCellTap(ChessBoardCell cell) {
-    PieceColor? cellColor = widget.controller.board[cell.index]?.pieceColor;
+    PieceColor? cellColor =
+        widget.controller.pieceColorAtBoardIndex(cell.index);
     // If no cell is selected, select a cell.
     if (_selectedCell != null ||
         (cellColor != null && cellColor != widget.opponentColor)) {
@@ -41,12 +42,12 @@ class _ChessBoardState extends State<ChessBoard> {
         });
       } else if (widget.controller.legalMoves
           .where((move) =>
-              move.initialLocation == _selectedCell!.cellLocation &&
-              move.finalLocation == cell.cellLocation)
+              move.startIndex == _selectedCell!.index &&
+              move.endIndex == cell.index)
           .isNotEmpty) {
         _playMove(widget.controller.legalMoves.firstWhere((move) =>
-            move.initialLocation == _selectedCell!.cellLocation &&
-            move.finalLocation == cell.cellLocation));
+            move.startIndex == _selectedCell!.index &&
+            move.endIndex == cell.index));
       } else {
         _selectedCell = null;
         _refreshBoard();
@@ -69,10 +70,9 @@ class _ChessBoardState extends State<ChessBoard> {
     if (_selectedCell!.pieceType != null &&
         widget.opponentColor != widget.controller.currentTurnColor) {
       widget.controller
-          .getLegalMovesForSelectedLocation(_selectedCell!.cellLocation)
+          .legalMovesForSelectedIndex(_selectedCell!.index)
           .forEach((move) {
-        int index =
-            cells.indexWhere((cell) => cell.cellLocation == move.finalLocation);
+        int index = cells.indexWhere((cell) => cell.index == move.endIndex);
 
         cells[index] = cells[index].copyWith(
             cellMode: cells[index].pieceColor != null &&
@@ -111,8 +111,8 @@ class _ChessBoardState extends State<ChessBoard> {
               index > 55 ? Utility.files[index - 56].toString() : '',
           cellLabelTop:
               index % 8 == 0 ? Utility.ranks[7 - (index ~/ 8)].toString() : '',
-          pieceType: widget.controller.board[index]?.pieceType,
-          pieceColor: widget.controller.board[index]?.pieceColor,
+          pieceType: widget.controller.pieceTypeAtBoardIndex(index),
+          pieceColor: widget.controller.pieceColorAtBoardIndex(index),
         );
       });
     });

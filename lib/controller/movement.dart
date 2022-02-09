@@ -1,9 +1,6 @@
-// First four offsets: horizontal, vertical, left diagonal, right diagonal.
-// Last four offsets corresponds to Knight movement direction.
-
-import 'package:flutter_chess/controller/enums.dart';
-
 class Movement {
+  // First four offsets: horizontal, vertical, left diagonal, right diagonal.
+  // Last four offsets corresponds to Knight movement direction.
   static const List<int> allDirectionalOffsets = [1, 8, 7, 9, 10, 17, 15, 6];
 
   static Movement kingMovement = Movement(
@@ -44,40 +41,14 @@ class Movement {
     mirrorDirection: false,
   );
 
-  /// Returns given piece type movement.
-  static Movement getMovementforPieceType(
-      PieceType pieceType, PieceColor pieceColor) {
-    switch (pieceType) {
-      case PieceType.king:
-        return Movement.kingMovement;
-      case PieceType.rook:
-        return Movement.rookMovement;
-      case PieceType.bishop:
-        return Movement.bishopMovement;
-      case PieceType.queen:
-        return Movement.queenMovement;
-      case PieceType.knight:
-        return Movement.knightMovement;
-      case PieceType.pawn:
-        return pieceColor == PieceColor.black
-            ? Movement.blackPawnMovement
-            : Movement.whitePawnMovement;
-    }
-  }
-
   Movement({
     required List<int> directionalOffsets,
-    required int maxStep,
+    required this.maxStep,
     bool mirrorDirection = true,
-  })  : _directionalOffsets = mirrorDirection
+  }) : directionalOffsets = mirrorDirection
             ? directionalOffsets.expand((dir) => [-dir, dir]).toList()
-            : directionalOffsets,
-        _maxStep = maxStep;
+            : directionalOffsets;
 
-  final List<int> _directionalOffsets;
-  final int _maxStep;
-
-  // Getter for private properties.
-  List<int> get directionalOffsets => _directionalOffsets;
-  int get maxStep => _maxStep;
+  final List<int> directionalOffsets;
+  final int maxStep;
 }

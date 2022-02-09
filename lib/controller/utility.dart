@@ -1,7 +1,8 @@
 import 'dart:io';
 
-import 'package:flutter_chess/controller/enums.dart';
-import 'package:flutter_chess/controller/game_piece.dart';
+import 'enums.dart';
+import 'game_piece.dart';
+import 'movement.dart';
 
 class Utility {
   static const String ranks = '12345678';
@@ -10,59 +11,59 @@ class Utility {
       'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
   static const int middleIndex = 28;
 
-  /// Converts piece type to fen character.
-  static String gamePieceToFenChar(
-      {required PieceType pieceType, required PieceColor pieceColor}) {
-    String pieceName = pieceType.toString().split('.').last;
-    String fenChar =
-        pieceType == PieceType.knight ? pieceName[1] : pieceName[0];
-
-    if (pieceColor == PieceColor.white) {
-      fenChar = fenChar.toUpperCase();
+  static getPieceMovement(String fenChr) {
+    switch (fenChr.toUpperCase()) {
+      case 'K':
+        return Movement.kingMovement;
+      case 'R':
+        return Movement.rookMovement;
+      case 'B':
+        return Movement.bishopMovement;
+      case 'Q':
+        return Movement.queenMovement;
+      case 'N':
+        return Movement.knightMovement;
+      default:
+        return fenChr == 'P'
+            ? Movement.whitePawnMovement
+            : Movement.blackPawnMovement;
     }
-
-    return fenChar;
   }
 
-  static GamePiece fenCharToGamePiece(String fenChar) {
-    PieceColor pieceColor =
-        fenChar.toUpperCase() != fenChar ? PieceColor.black : PieceColor.white;
+  static List<String> initBoardFromFen(String fen) {
+    String configFen = fen.split(' ').first;
+    List<String> board = [];
+    int itr = -1;
 
-    PieceType pieceType = fenChar.toUpperCase() == 'N'
-        ? PieceType.knight
-        : PieceType.values.firstWhere((pieceType) =>
-            pieceType.toString().split('.').last[0] == fenChar.toLowerCase());
-
-    return GamePiece(pieceColor: pieceColor, pieceType: pieceType);
-  }
-
-  /// Utility function to print current state of the board.
-  static void debugBoard(List<GamePiece?> board) {
-    for (int i = 0; i < board.length; i++) {
-      if (board[i] != null) {
-        stdout.write(board[i]!.fenChar);
-      } else {
-        stdout.write('+');
+    while (++itr < configFen.length) {
+      // Next rank condition.
+      if (configFen[itr] == '/') {
+        continue;
       }
-      stdout.write(' ');
+      // Blank space condition.
+      else if (int.tryParse(configFen[itr]) != null) {
+        int blankSpaces = int.parse(configFen[itr]);
+        // Add specified blank spaces.
+        while (blankSpaces-- > 0) {
+          board.add('+');
+        }
+      }
+      // Add piece condition.
+      else {
+        board.add(configFen[itr]);
+      }
+    }
+    return board;
+  }
 
+  static void debugBoard(List<String> board) {
+    for (int i = 0; i < board.length; i++) {
+      stdout.write(board[i]);
+      stdout.write(' ');
       if ((i + 1) % 8 == 0) {
         stdout.write('\n');
       }
     }
-  }
-
-  /// Utility function to check if the next board index after adding an offset to previous board index is valid.
-  static bool isValidMoveIndex(int currentIndex, int offset,
-      {int multiplier = 1}) {
-    int nextIndex = currentIndex + offset * multiplier;
-
-    return (nextIndex > -1 &&
-        nextIndex < ranks.length * ranks.length &&
-        Utility.getDistanceBetweenBoardIndices(currentIndex, nextIndex) ==
-            Utility.getDistanceBetweenBoardIndices(
-                    Utility.middleIndex, Utility.middleIndex + offset) *
-                multiplier);
   }
 
   /// Convert board index to location.
@@ -83,5 +84,43 @@ class Utility {
     int y2 = (secondIndex / ranks.length).floor();
 
     return (y2 - y1).abs() + (x2 - x1).abs();
+  }
+
+  /// Utility function to check if the next board index after adding an offset to previous board index is valid.
+  static bool isValidMoveIndex(int currentIndex, int offset,
+      {int multiplier = 1}) {
+    int nextIndex = currentIndex + offset * multiplier;
+
+    return (nextIndex > -1 &&
+        nextIndex < ranks.length * ranks.length &&
+        getDistanceBetweenBoardIndices(currentIndex, nextIndex) ==
+            getDistanceBetweenBoardIndices(middleIndex, middleIndex + offset) *
+                multiplier);
+  }
+
+  /// Converts game piece to fen character.
+  static String gamePieceToFenChar(GamePiece gamePiece) {
+    String pieceName = gamePiece.pieceType.toString().split('.').last;
+    String fenChar =
+        gamePiece.pieceType == PieceType.knight ? pieceName[1] : pieceName[0];
+
+    if (gamePiece.pieceColor == PieceColor.white) {
+      fenChar = fenChar.toUpperCase();
+    }
+
+    return fenChar;
+  }
+
+  /// Converts fen character to game piece.
+  static GamePiece fenCharToGamePiece(String fenChar) {
+    PieceColor pieceColor =
+        fenChar.toUpperCase() != fenChar ? PieceColor.black : PieceColor.white;
+
+    PieceType pieceType = fenChar.toUpperCase() == 'N'
+        ? PieceType.knight
+        : PieceType.values.firstWhere((pieceType) =>
+            pieceType.toString().split('.').last[0] == fenChar.toLowerCase());
+
+    return GamePiece(pieceColor: pieceColor, pieceType: pieceType);
   }
 }
