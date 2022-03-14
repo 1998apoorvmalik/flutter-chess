@@ -1,47 +1,7 @@
-import 'game_piece.dart';
-import 'utility.dart';
-
 class Movement {
   // First four offsets: horizontal, vertical, left diagonal, right diagonal.
   // Last four offsets corresponds to Knight movement direction.
   static const List<int> allDirectionalOffsets = [1, 8, 7, 9, 10, 17, 15, 6];
-
-  static BigInt onlyRank1 = BigInt.from(0xFF);
-  static BigInt onlyFileA = BigInt.parse('9259542123273814144', radix: 10);
-
-  static Map<int, Map<String, BigInt>> pieceMovementMap = Map.fromEntries(
-    List.generate(64, (index) => index).map(
-      (index) => MapEntry(
-        index,
-        Map.fromEntries(
-          Utility.allFenPieces.split('').map(
-            (key) {
-              switch (Utility.fenCharToGamePiece(key).pieceType) {
-                case PieceType.king:
-                  return MapEntry(key,
-                      onlyRank1 << (index ~/ 8) | onlyFileA >> (7 - index % 8));
-                case PieceType.queen:
-                  return MapEntry(key,
-                      onlyRank1 << (index ~/ 8) | onlyFileA >> (7 - index % 8));
-                case PieceType.pawn:
-                  return MapEntry(key,
-                      onlyRank1 << (index ~/ 8) | onlyFileA >> (7 - index % 8));
-                case PieceType.bishop:
-                  return MapEntry(key,
-                      onlyRank1 << (index ~/ 8) | onlyFileA >> (7 - index % 8));
-                case PieceType.knight:
-                  return MapEntry(key,
-                      onlyRank1 << (index ~/ 8) | onlyFileA >> (7 - index % 8));
-                case PieceType.rook:
-                  return MapEntry(key,
-                      onlyRank1 << (index ~/ 8) | onlyFileA >> (7 - index % 8));
-              }
-            },
-          ),
-        ),
-      ),
-    ),
-  );
 
   static Movement kingMovement = Movement(
     directionalOffsets: allDirectionalOffsets.sublist(0, 4),

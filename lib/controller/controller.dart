@@ -1,15 +1,12 @@
-// Imports
-import 'enums.dart';
+import 'game_move.dart';
 import 'game_piece.dart';
 import 'movement.dart';
 import 'utility.dart';
-import 'game_move.dart';
+import 'extensions.dart';
 
-// Exports
+export 'utility.dart';
 export 'game_piece.dart';
 export 'game_move.dart';
-export 'utility.dart';
-export 'enums.dart';
 
 class ChessController {
   ChessController({String fen = Utility.defaultFEN})
@@ -17,7 +14,7 @@ class ChessController {
     _updateLegalMoves();
   }
 
-  List<String> _board;
+  final List<BigInt> _board;
   bool _isWhiteTurn = false;
   bool _isGameEnded = false;
 
@@ -28,85 +25,86 @@ class ChessController {
   void Function()? sceneRefreshCallback;
 
   // Getter for private properties.
-  List<GamePiece> get board => _board
+  List<BigInt> get bitBoard => _board;
+  List<String> get fenBoard => Utility.bitboardsToFenBoard(_board);
+  List<GamePiece> get board => fenBoard
       .map((String fenChr) => Utility.fenCharToGamePiece(fenChr))
       .toList();
+
   bool get isWhiteTurn => _isWhiteTurn;
   bool get isGameEnded => _isGameEnded;
-  List<GameMove> get legalMoves =>
-      _legalMovesHistory.isNotEmpty ? _legalMovesHistory.last : [];
-  List<GameMove> get moveHistory => _moveHistory;
   PieceColor get currentTurnColor =>
       _isWhiteTurn ? PieceColor.white : PieceColor.black;
 
+  List<GameMove> get moveHistory => _moveHistory;
+  List<GameMove> get legalMoves =>
+      _legalMovesHistory.isNotEmpty ? _legalMovesHistory.last : [];
+
   /// Return legal moves for selected board index.
-  List<GameMove> legalMovesForSelectedIndex(int index) =>
+  List<GameMove> legalMovesForIndex(int index) =>
       legalMoves.where((move) => move.startIndex == index).toList();
 
   /// Get piece color at a given board index.
-  PieceColor? pieceColorAtBoardIndex(int index) => _board[index] != '+'
-      ? Utility.fenCharToGamePiece(_board[index]).pieceColor
+  PieceColor? pieceColorAtBoardIndex(int index) => fenBoard[index] != '+'
+      ? Utility.fenCharToGamePiece(fenBoard[index]).pieceColor
       : null;
 
   /// Get piece type at a given board index.
-  PieceType? pieceTypeAtBoardIndex(int index) => _board[index] != '+'
-      ? Utility.fenCharToGamePiece(_board[index]).pieceType
+  PieceType? pieceTypeAtBoardIndex(int index) => fenBoard[index] != '+'
+      ? Utility.fenCharToGamePiece(fenBoard[index]).pieceType
       : null;
 
-  bool isWhiteAtIndex(int index) =>
-      _board[index] != '+' && _board[index] == _board[index].toUpperCase();
-  bool isBlackAtIndex(int index) =>
-      _board[index] != '+' && _board[index] == _board[index].toLowerCase();
-
-  /// Check if two board indices represent same color pieces.
-  bool _indicesSameColorCheck(int i, int j) =>
-      (isWhiteAtIndex(i) && isWhiteAtIndex(j)) ||
-      (isBlackAtIndex(i) && isBlackAtIndex(j));
-
   /// Returns raw-pseudo (may contain illegal moves) for a piece at given board index.
-  List<GameMove> _getPseudoMovesForBoardIndex(int index) {
+  List<GameMove> _pseudoLegalMovesForPiece(
+      {required String fenChr,
+      required BigInt bitboard,
+      required BigInt occupied}) {
     List<GameMove> moves = [];
 
-    if (_board[index] == '+') {
-      return moves;
-    }
+    for (int index in bitboard.getSetBitIndices()) {
+      print(index);
+      BigInt slider = bitboard & -bitboard;
+      print(slider.toBin());
+      BigInt horizontalAttacks = Utility.getLineAttacks(
+          slider, occupied, Movement.onlyRank1 << (index ~/ 8));
+      BigInt verticalAttacks = Utility.getLineAttacks(
+          slider, occupied, Movement.onlyFileA >> 7 - (index % 8));
 
-    Movement movement = Utility.getPieceMovement(_board[index]);
-    for (int i = 0; i < movement.directionalOffsets.length; i++) {
-      for (int j = 1; j <= movement.maxStep; j++) {
-        int nextIndex = index + movement.directionalOffsets[i] * j;
-        if (Utility.isValidMoveIndex(index, movement.directionalOffsets[i],
-                multiplier: j) &&
-            !_indicesSameColorCheck(index, nextIndex)) {
-          moves.add(GameMove(
-              startIndex: index,
-              endIndex: nextIndex,
-              capturedPiece: _board[nextIndex]));
-
-          if (_board[nextIndex] != '+') {
-            if (_board[index].toUpperCase() == 'P') {
-              moves.removeLast();
-            }
-
-            break;
-          }
-        } else {
-          break;
-        }
+      for (int endIndex
+          in (horizontalAttacks | verticalAttacks).getSetBitIndices()) {
+        moves.add(GameMove(startIndex: index, endIndex: endIndex));
       }
+
+      bitboard &= bitboard - BigInt.one;
     }
-
-    moves.addAll(specificMovesForBoardIndex(index));
-
     return moves;
+
+    // for (int i = 0; i < movement.directionalOffsets.length; i++) {
+    //   BigInt movesBitboard = movement.directionalOffsets[i] > 0
+    //       ? (bitboard << movement.directionalOffsets[i].abs() & ~occupied)
+    //       : (bitboard >> movement.directionalOffsets[i].abs() & ~occupied);
+
+    //   if (movesBitboard < BigInt.zero) {
+    //     break;
+    //   }
+    //   List<int> endIndices = Utility.bitboardToIndices(movesBitboard);
+
+    //   Utility.bitboardToIndices(bitboard).forEach((startIndex) {
+    //     endIndices.forEach((endIndex) {
+    //       moves.add(GameMove(startIndex: startIndex, endIndex: endIndex));
+    //     });
+    //   });
+    // }
   }
 
   void _updateLegalMoves() {
     List<GameMove> legalMoves = [];
+    BigInt occupied = Utility.getOccupiedBitBoard(_board);
     for (int i = 0; i < _board.length; i++) {
-      if (isWhiteTurn ? isBlackAtIndex(i) : isWhiteAtIndex(i)) {
-        legalMoves.addAll(_getPseudoMovesForBoardIndex(i));
-      }
+      legalMoves.addAll(_pseudoLegalMovesForPiece(
+          fenChr: Utility.gamePieceFromIndex(i).fenChar,
+          bitboard: _board[i],
+          occupied: occupied));
     }
     _legalMovesHistory.add(legalMoves);
   }
@@ -115,12 +113,8 @@ class ChessController {
     if (!legalMoves.contains(move)) {
       return;
     }
-    // Set capture index to empty square.
-    _board[move.capturedIndex] = '+';
-    // Move the piece to the final index.
-    _board[move.endIndex] = _board[move.startIndex];
-    // Set initial index to empty square.
-    _board[move.startIndex] = '+';
+    // TODO: Update Board!
+
     // Execute scene refresh callback.
     if (sceneRefreshCallback != null) {
       sceneRefreshCallback!();
@@ -133,23 +127,15 @@ class ChessController {
     _updateLegalMoves();
   }
 
-  /// Undo the last played legal move.
   void undoMove() {
     if (moveHistory.isEmpty) {
       return;
     }
-
+    // Get the last played move.
     GameMove move = _moveHistory.removeLast();
-    // Move the piece to the initial index.
-    _board[move.startIndex] = _board[move.endIndex];
-    // Set the final index to empty square.
-    _board[move.endIndex] = '+';
-    // Move the captured piece to its corresponding index.
-    _board[move.capturedIndex] = move.capturedPiece;
-    // Execute scene refresh callback.
-    if (sceneRefreshCallback != null) {
-      sceneRefreshCallback!();
-    }
+
+    // TODO: Update Board!
+
     // Execute scene refresh callback.
     if (sceneRefreshCallback != null) {
       sceneRefreshCallback!();
@@ -158,69 +144,5 @@ class ChessController {
     _isWhiteTurn = !_isWhiteTurn;
     // Update legal moves.
     _legalMovesHistory.removeLast();
-  }
-}
-
-extension on ChessController {
-  List<GameMove> specificMovesForBoardIndex(int index) {
-    List<GameMove> specificMoves = [];
-
-    // Pawn specific moves.
-    if (_board[index].toUpperCase() == 'P') {
-      Movement movement = Utility.getPieceMovement(_board[index]);
-      String location = Utility.convertBoardIndexToLocation(index);
-      int offset = movement.directionalOffsets.first;
-
-      // Pawn double move.
-      if ((location[1] == '2' || location[1] == '7') &&
-          _board[index + offset] == '+' &&
-          _board[index + offset * 2] == '+') {
-        specificMoves
-            .add(GameMove(startIndex: index, endIndex: index + offset * 2));
-      }
-
-      int _multiplier = isWhiteAtIndex(index) ? -1 : 1;
-      int leftDiagonalOffset = Movement.allDirectionalOffsets[3] * _multiplier;
-      int rightDiagonalOffset = Movement.allDirectionalOffsets[2] * _multiplier;
-      int leftOffset = Movement.allDirectionalOffsets[0] * _multiplier;
-      int rightOffset = -leftOffset;
-
-      bool canPawnAttack({bool rightDirectionTest = false}) {
-        int diagonalOffset =
-            rightDirectionTest ? rightDiagonalOffset : leftDiagonalOffset;
-        int horizontalOffset = rightDirectionTest ? rightOffset : leftOffset;
-
-        return (Utility.isValidMoveIndex(index, diagonalOffset) &&
-            !_indicesSameColorCheck(index, index + diagonalOffset) &&
-            (_board[index + diagonalOffset] != '+' ||
-                ((location[1] == '4' || location[1] == '5') &&
-                    !_indicesSameColorCheck(index, index + horizontalOffset) &&
-                    (_board[index + horizontalOffset]).toUpperCase() == 'P')));
-      }
-
-      if (canPawnAttack(rightDirectionTest: false)) {
-        int endIndex = index + leftDiagonalOffset;
-        int capturedIndex =
-            _board[endIndex] == '+' ? index + leftOffset : endIndex;
-        specificMoves.add(GameMove(
-            startIndex: index,
-            endIndex: endIndex,
-            capturedPiece: _board[capturedIndex],
-            capturedIndex: capturedIndex));
-      }
-
-      if (canPawnAttack(rightDirectionTest: true)) {
-        int endIndex = index + rightDiagonalOffset;
-        int capturedIndex =
-            _board[endIndex] == '+' ? index + rightOffset : endIndex;
-        specificMoves.add(GameMove(
-            startIndex: index,
-            endIndex: endIndex,
-            capturedPiece: _board[capturedIndex],
-            capturedIndex: capturedIndex));
-      }
-    }
-
-    return specificMoves;
   }
 }

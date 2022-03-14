@@ -50,6 +50,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.4"
+  dart_numerics:
+    dependency: "direct main"
+    description:
+      name: dart_numerics
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.6"
   fake_async:
     dependency: transitive
     description:
@@ -57,6 +64,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.2.0"
+  fixnum:
+    dependency: "direct main"
+    description:
+      name: fixnum
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.0"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -121,6 +135,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.2"
+  quiver:
+    dependency: transitive
+    description:
+      name: quiver
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.0.1+1"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -168,6 +189,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.4.3"
+  tuple:
+    dependency: transitive
+    description:
+      name: tuple
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.0"
   typed_data:
     dependency: transitive
     description:

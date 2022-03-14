@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chess/constants.dart';
-import 'package:flutter_chess/controller/enums.dart';
-import 'package:flutter_chess/controller/utility.dart';
+import 'package:flutter_chess/controller/controller.dart';
 
 enum ChessBoardCellMode {
   normal,
@@ -61,19 +60,19 @@ class ChessBoardCell extends StatelessWidget {
 
     Color _cellColor = (index / 8).floor() % 2 != 0
         ? (index % 2 == 0
-            ? Colors.black.withOpacity(kBlackOpacity)
-            : Colors.white.withOpacity(kBlackOpacity))
-        : (index % 2 == 0
-            ? Colors.white.withOpacity(kBlackOpacity)
-            : Colors.black.withOpacity(kBlackOpacity));
-
-    Color _textColor = (index / 8).floor() % 2 != 0
-        ? (index % 2 == 0
             ? Colors.white.withOpacity(kBlackOpacity)
             : Colors.black.withOpacity(kBlackOpacity))
         : (index % 2 == 0
             ? Colors.black.withOpacity(kBlackOpacity)
             : Colors.white.withOpacity(kBlackOpacity));
+
+    Color _textColor = (index / 8).floor() % 2 != 0
+        ? (index % 2 == 0
+            ? Colors.black.withOpacity(kBlackOpacity)
+            : Colors.white.withOpacity(kBlackOpacity))
+        : (index % 2 == 0
+            ? Colors.white.withOpacity(kBlackOpacity)
+            : Colors.black.withOpacity(kBlackOpacity));
 
     switch (cellMode) {
       case ChessBoardCellMode.normal:

@@ -24,6 +24,7 @@ class _ChessBoardState extends State<ChessBoard> {
   late List<ChessBoardCell> cells;
 
   void onCellTap(ChessBoardCell cell) {
+    print(cell.index);
     PieceColor? cellColor =
         widget.controller.pieceColorAtBoardIndex(cell.index);
     // If no cell is selected, select a cell.
@@ -70,7 +71,7 @@ class _ChessBoardState extends State<ChessBoard> {
     if (_selectedCell!.pieceType != null &&
         widget.opponentColor != widget.controller.currentTurnColor) {
       widget.controller
-          .legalMovesForSelectedIndex(_selectedCell!.index)
+          .legalMovesForIndex(_selectedCell!.index)
           .forEach((move) {
         int index = cells.indexWhere((cell) => cell.index == move.endIndex);
 
@@ -107,10 +108,9 @@ class _ChessBoardState extends State<ChessBoard> {
         return ChessBoardCell(
           index: index,
           onTapCallback: onCellTap,
-          cellLabelBottom:
-              index > 55 ? Utility.files[index - 56].toString() : '',
+          cellLabelBottom: index < 8 ? Utility.files[index].toString() : '',
           cellLabelTop:
-              index % 8 == 0 ? Utility.ranks[7 - (index ~/ 8)].toString() : '',
+              index % 8 == 0 ? Utility.ranks[(index ~/ 8)].toString() : '',
           pieceType: widget.controller.pieceTypeAtBoardIndex(index),
           pieceColor: widget.controller.pieceColorAtBoardIndex(index),
         );
@@ -133,6 +133,7 @@ class _ChessBoardState extends State<ChessBoard> {
       height: widget.size,
       width: widget.size,
       child: GridView.count(
+        reverse: true,
         physics: const NeverScrollableScrollPhysics(),
         crossAxisCount: 8,
         children: cells.toList(),
